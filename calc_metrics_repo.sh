@@ -24,9 +24,25 @@ sort -u readability_commits_repeated.txt > readability_commits_unique.txt
 #cut --fields=1 --delimiter=' ' readability_commits_unique.txt
 # keep only first column (commit hash)
 
-echo "Found $(wc --lines < readability_commits_unique.txt) readability commits!"
+num_readab_commits=$(wc --lines < readability_commits_unique.txt)
 
-# TODO maybe find some random non-readability commits
+echo "Found $num_readab_commits readability commits!"
+
+
+# Find some random non-readability commits
+# How many? 2x as many as the readability
+
+git log --all -n200 --pretty=oneline |
+	shuf --head-count=$((2*num_readab_commits)) > nonread_commits_unchecked.txt
+
+# We have to remove any possible readability commits
+
+sort nonread_commits_unchecked.txt | comm -13 readability_commits_unique.txt - > nonread_commits.txt
+
+# comm -13 outputs only lines which are only in file 2. '-' means stdin
+
+#TODO rm readability_commits_repeated.txt nonread_commits_unchecked.txt
+
 
 #-----------------
 #for each commit: (maybe select x eg.400 readability commits, and 4*x random other commits for comparison)
@@ -43,9 +59,19 @@ for commit in $(cut -f1 --delimiter=' ' readability_commits_unique.txt) $(cat no
 	git checkout $commit
 	
 	# find list of files changed and num of lines changed
-	git diff --numstat HEAD^ > $METRICS_DIR/${short_hash}_numstat.txt
+	git diff --numstat --diff-filter=MR HEAD^ > $METRICS_DIR/${short_hash}_numstat.txt
 	
-	files_changed=$(cut -f3 $METRICS_DIR/${short_hash}_numstat.txt) # the 3rd column has the filenames
+	# We only want filees which exist before and after the commit. So no added/deleted.
+	# The option --diff-filter=MR keeps only modified and renamed files.
+	
+	# TODO what if a line is renamed, like:
+	# 17      2       calc_metrics_for_repo.sh => calc_metrics_repo.sh
+	
+	files_changed=$(cut -f3 $METRICS_DIR/${short_hash}_numstat.txt | grep '\.java$') # the 3rd column has the filenames
+	# only include .java files (maybe shouldn't? TODO)
+	#sed -E 's/.*\t.*\t(.*\.java)$/$1/;t;d' $METRICS_DIR/${short_hash}_numstat.txt
+	#cut -f3 $METRICS_DIR/${short_hash}_numstat.txt | grep '\.java$'
+	#grep --perl-regexp --only-matching '[^\t]+\.java$' $METRICS_DIR/${short_hash}_numstat.txt
 	
 	for file in $files_changed ; do
 	
