@@ -51,7 +51,7 @@ for commit in $(cut -f1 --delimiter=' ' readability_commits_unique.txt) $(cat no
 	
 		# Calculate various metrics for file after commit. Store results
 		
-		$SCRIPTS_DIR/calc_metrics_file.py $file >> $METRICS_DIR/${short_hash}_after.csv
+		$SCRIPTS_DIR/metric_generation.py $file >> $METRICS_DIR/${short_hash}_after.csv
 		
 		# one line per file. Filename can be the first field
 	done
@@ -62,7 +62,7 @@ for commit in $(cut -f1 --delimiter=' ' readability_commits_unique.txt) $(cat no
 	for file in $files_changed ; do
 		# Calculate various metrics for file before commit. Store results
 		
-		$SCRIPTS_DIR/calc_metrics_file.py $file >> $METRICS_DIR/${short_hash}_befor.csv
+		$SCRIPTS_DIR/metric_generation.py $file >> $METRICS_DIR/${short_hash}_befor.csv
 	done
 	
 	
