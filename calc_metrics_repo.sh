@@ -4,7 +4,7 @@
 # Also, ensure that the directories exist
 SCRIPTS_DIR=$(pwd) #TODO
 METRICS_DIR="$(pwd)/metrics" #TODO
-KEYWORDS="readability readable" # TODO $(cat keywords.txt)
+readarray KEYWORDS < keywords_for_commits.txt
 
 
 # TODO cd to project's git directory. First clone it.
@@ -12,17 +12,17 @@ KEYWORDS="readability readable" # TODO $(cat keywords.txt)
 
 # find radability commits
 
-for keyword in $KEYWORDS ; do
+for keyword in "${KEYWORDS[@]}" ; do
+# Must use this syntax in order to use it as an array. stackoverflow.com/a/16452606
 
-	git log --all --grep="$keyword" --pretty=oneline --regexp-ignore-case >> readability_commits_repeated.txt
-	# all means search commits from all branches
+	git log --all --grep="$keyword" --pretty=%H --regexp-ignore-case >> readability_commits_repeated.txt
+	# --all means search commits from all branches
+	# --pretty=%H means to only write the hashes. Otherwise need to use "cut -f1 --delimiter=' '"
 done
 
 sort -u readability_commits_repeated.txt > readability_commits_unique.txt
 # keep only uniques
 
-#cut --fields=1 --delimiter=' ' readability_commits_unique.txt
-# keep only first column (commit hash)
 
 num_readab_commits=$(wc --lines < readability_commits_unique.txt)
 
@@ -32,7 +32,7 @@ echo "Found $num_readab_commits readability commits!"
 # Find some random non-readability commits
 # How many? 2x as many as the readability
 
-git log --all -n200 --pretty=oneline |
+git log --all -n200 --pretty=%H |
 	shuf --head-count=$((2*num_readab_commits)) > nonread_commits_unchecked.txt
 
 # We have to remove any possible readability commits
@@ -45,9 +45,9 @@ sort nonread_commits_unchecked.txt | comm -13 readability_commits_unique.txt - >
 
 
 #-----------------
-#for each commit: (maybe select x eg.400 readability commits, and 4*x random other commits for comparison)
+#for each commit: (from x eg.50 readability commits, and 2*x random other commits for comparison)
 
-for commit in $(cut -f1 --delimiter=' ' readability_commits_unique.txt) $(cat nonread_commits.txt); do
+for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 
 	short_hash=$(echo $commit | cut -c1-10)
 	
