@@ -1,17 +1,26 @@
-import subprocess
-import re
-import sys
-import os
+#!/usr/bin/python3
+
+import re, subprocess, sys, os
 from math import exp, fsum
 
 
-if len(sys.argv) < 2 or not os.path.isfile(sys.argv[1]):
-	print("Error. File not given or not exists")
+if len(sys.argv) < 2 :
+	print("Needs one argument. Usage: calc_metrics_file.py filename | --setup", file=sys.stderr)
 	sys.exit(1)
+
+if sys.argv[1] == "--setup" :
+	print("file,many_metrics_TODO,bw,posnett,dorn,scalabrino") # TODO put the actual metrics
+	sys.exit(0)
+
 
 filename = sys.argv[1]
 filename = "/home/anestis/Επιφάνεια εργασίας/tmp_diplom/testfile2.java"
 #TODO remove
+
+if not os.path.isfile(filename):
+	print("Error. File does not exist", file=sys.stderr)
+	sys.exit(1)
+
 
 ### Many metrics, Posnett, and Dorn
 
@@ -39,9 +48,18 @@ tmp = 1 # TODO DORN MODEL
 dorn_score = 1/(1 + exp( -tmp))
 
 
+### Source Meter Analyser
+#TODO
+# we dont call SMA here. We read its resulting file.
+# Which file? Maybe in an env variable?
+# find a line which contains the filename and the class field does
+# not contain $, ie. it's not a helping class
+# Then add its metrics to the var metrics
+
 
 ### Buse Weimer
 
+# Split to snippets of 8 lines, then give them to BuseWeimer jar
 command = "sed '0~8 s/$/\\n###/g' '{0}' | java -jar BW_readability.jar".format(filename)
 raw = subprocess.check_output(command, shell=True).decode("utf-8")
 
@@ -74,9 +92,9 @@ metrics.append(scalabrino_score)
 
 csv_line = ','.join(map(str, metrics))
 
-#TODO write it in a file named by the commit?
 
+# write to STDOUT. Will be redirected to a file named by the commit
 
-print(metrics)
+print(metrics) #TODO remove this
 print(csv_line)
 

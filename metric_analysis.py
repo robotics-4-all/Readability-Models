@@ -51,7 +51,9 @@ def ensure_same_order(a, b, key_name):
 with open('readability_commits_unique.txt', 'r') as reader:
 	readab_commits = [ line[0:40] for line in reader ]
 
-# TODO load nonread_commits
+# load nonread_commits
+with open('nonread_commits.txt', 'r') as reader:
+	nonread_commits = [ line[0:40] for line in reader ]
 
 # TODO load metrics. Must be the same as in csv headers
 
