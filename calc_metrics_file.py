@@ -29,18 +29,19 @@ raw = subprocess.check_output(['java', '-cp', 'rsm.jar',
 
 #comma_metrics = re.sub(r"^.+: (.{3,})\n", "\\1,", raw, 0, re.MULTILINE)
 
-metrics = re.findall(r"^.+: (.{3,})$", raw, re.MULTILINE)
-# The above is a str list. Make it a float list
-metrics = list(map(float, metrics))
-#metrics = array.array('f', map(float, list_metrics)) # If we wanted float array
+regex_res = re.findall(r"^(.+): (.{3,})$", raw, re.MULTILINE)
+# The above is a list of tuples with strings. Make it a dict with floats
+metrics = {'filename' : filename}
+for line in regex_res: # line is a tuple [metric_name, value]
+	metrics[line[0]] = float(line[1])
 
 
-if len(metrics) != 110:
+if len(metrics) != 111: # 1 was the filename
 	print("Warning! There were not 110 metrics")
 
 
-# POSNETT :		  Entropy			 Halstead V			Lines
-tmp = 8.87 - 1.5*metrics[48] - 0.033*metrics[49] + 0.4*metrics[50]
+# POSNETT
+tmp = 8.87 - 1.5*metrics['Posnett entropy'] - 0.033*metrics['Posnett volume'] + 0.4*metrics['Posnett lines']
 posnett_score = 1/(1 + exp( -tmp))
 
 
@@ -49,12 +50,26 @@ dorn_score = 1/(1 + exp( -tmp))
 
 
 ### Source Meter Analyser
-#TODO
 # we dont call SMA here. We read its resulting file.
-# Which file? Maybe in an env variable?
-# find a line which contains the filename and the class field does
-# not contain $, ie. it's not a helping class
-# Then add its metrics to the var metrics
+# Which file? $METRICS_DIR/curr_sma_result.csv
+
+wanted_metrics = ['CC', 'CCL', 'CCO', 'CI', 'CLC', 'CLLC', 'LDC', 'LLDC', 'LCOM5', 'NL', 'NLE', 'WMC', 'CBO', 'CBOI', 'NII', 'NOI', 'RFC', 'AD', 'CD', 'CLOC', 'DLOC', 'PDA', 'PUA', 'TCD', 'TCLOC', 'DIT', 'NOA', 'NOC', 'NOD', 'NOP', 'LLOC', 'LOC', 'NA', 'NG', 'NLA', 'NLG', 'NLM', 'NLPA', 'NLPM', 'NLS', 'NM', 'NOS', 'NPA', 'NPM', 'NS', 'TLLOC', 'TLOC', 'TNA', 'TNG', 'TNLA', 'TNLG', 'TNLM', 'TNLPA', 'TNLPM', 'TNLS', 'TNM', 'TNOS', 'TNPA', 'TNPM', 'TNS', 'WarningBlocker', 'WarningCritical', 'WarningInfo', 'WarningMajor', 'WarningMinor', 'Best Practice Rules', 'Clone Metric Rules', 'Code Style Rules', 'Cohesion Metric Rules', 'Complexity Metric Rules', 'Coupling Metric Rules', 'Design Rules', 'Documentation Metric Rules', 'Documentation Rules', 'Error Prone Rules', 'Inheritance Metric Rules', 'Multithreading Rules', 'Performance Rules', 'Runtime Rules', 'Security Rules', 'Size Metric Rules']
+# TODO maybe not the last ones? on;y the 2-4 letters?
+
+with open(os.environ['METRICS_DIR'] + '/curr_sma_result.csv', 'r') as reader:
+	
+	csv_sma = csv.DictReader(reader)
+	
+	for row in csv_sma:
+		if row['Path'].endswith(filename) and not ('$' in row['Name']):
+			# We want the 'main' (not secondary) class of each file
+			# The one that doesn't contain $ like UpdateHelper$Result
+			
+			# add row[...] to metrics
+			for m in wanted_metrics:
+				metrics[m] = row[m]
+			
+			break # Stop the search for the main class of the file
 
 
 ### Buse Weimer
@@ -83,18 +98,16 @@ scalabrino_score = float( raw.split('\t')[-1] )
 
 ### Final stuff. Append to csv
 
-metrics.insert(0, filename) # After that, the indexes of the metrics
-# have changed. Caution with any operations with metrics below
-metrics.append(bw_score)
-metrics.append(posnett_score)
-metrics.append(dorn_score)
-metrics.append(scalabrino_score)
+metrics['bw_score'] = bw_score
+metrics['posnett_score'] = posnett_score
+metrics['dorn_score'] = dorn_score
+metrics['scalabrino_score'] = scalabrino_score
 
-csv_line = ','.join(map(str, metrics))
+#csv_line = ','.join(map(str, metrics))
 
+# Use a csv.DictWriter and write to STDOUT. Will be redirected to a file named by the commit
+# TODO define list with the order of fieldnames
+csv_writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
+writer.writerow(metrics)
 
-# write to STDOUT. Will be redirected to a file named by the commit
-
-print(metrics) #TODO remove this
-print(csv_line)
 
