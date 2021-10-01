@@ -18,6 +18,10 @@ for keyword in "${KEYWORDS[@]}" ; do
 	git log --all --grep="$keyword" --pretty=%H --regexp-ignore-case >> readability_commits_repeated.txt
 	# --all means search commits from all branches
 	# --pretty=%H means to only write the hashes. Otherwise need to use "cut -f1 --delimiter=' '"
+	
+	#TODO maybe only grep in titles, not notes. Otherwise, 1 repo had 115k readability commits
+	# E.g: git log --all --oneline | grep --ignore-case "$keyword" | cut -f1 >> readability_commits_repeated.txt
+	# But this may be too cpu-intensive, to list all commits
 done
 
 sort -u readability_commits_repeated.txt > readability_commits_unique.txt
@@ -45,11 +49,19 @@ sort nonread_commits_unchecked.txt | comm -13 readability_commits_unique.txt - >
 
 
 function runSMA () {
-	$SCRIPTS_DIR/SourceMeterJava -resultsDir=/tmp/SMAresults -projectName=$1 -projectBaseDir=. \
+
+	common_path=$(python3 -c "import sys,os.path; print(os.path.commonpath(sys.argv[1:]))" $files_changed )
+	
+	if [ -z $common_path ] ; then # If it's empty, no common subpath
+		common_path="."
+	fi
+	
+	$SCRIPTS_DIR/SourceMeterJava -resultsDir=/tmp/SMAresults -projectName=$1 -projectBaseDir=$common_path \
 		-runFB=false -runPMD=false -runAndroidHunter=false -runMetricHunter=false \
 		-runVulnerabilityHunter=false -runFaultHunter=false -runRTEHunter=false \
 		-runDCF=false -runMET=true $files_changed
-		#TODO check if the command works
+		#TODO Doing -projectBaseDir=. makes it extremely slow at step DirectoryBasedAnalysisTask
+		# and it may even run out of ram... What to do...
 	
 	# We just want it to calc metrics: runMET
 	# projectBaseDir is the current, the base git dir.
@@ -81,14 +93,18 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 	#cut -f3 $METRICS_DIR/${short_hash}_numstat.txt | grep '\.java$'
 	#grep --perl-regexp --only-matching '[^\t]+\.java$' $METRICS_DIR/${short_hash}_numstat.txt
 	
-	runSMA after & # run SourceMeter with minimal options
-	# WITH " &" so that they run in parallel
+	runSMA after # run SourceMeter with minimal options
+	# Since they depend on the changed files, they should probably NOT run in parallel
+	
+	if [[ $? != 0 ]] ; then # If SMA had a problem (nonzero return code) and did not produce output
+		rm -rf /tmp/SMAresults/
+		continue # don't run SMA again for before commit
+	fi
 	
 	git checkout HEAD^ # to before commit
 	
 	runSMA befor
 	
-	wait # for the other run of SMA to finish
 	
 	# keep only -Class.csv. * is for the timestamp
 	mv /tmp/SMAresults/after/java/*/after-Class.csv $METRICS_DIR/${short_hash}_sma_after.csv
