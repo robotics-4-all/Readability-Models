@@ -64,15 +64,14 @@ function runSMA () {
 		# and it may even run out of ram... What to do...
 	
 	# We just want it to calc metrics: runMET
-	# projectBaseDir is the current, the base git dir.
-	#TODO does this work? -projectBaseDir=.
 }
 
 #-----------------
 #for each commit: (from x eg.50 readability commits, and 2*x random other commits for comparison)
 
 
-sudo update-java-alternatives -s java-1.11.0-openjdk-amd64 #TODO maybe do a 2> /dev/null for "error: no alternatives for xyz"
+sudo update-java-alternatives -s java-1.11.0-openjdk-amd64 2> /dev/null
+# the redirection 2> is for "error: no alternatives for xyz"
 # SourceMeter needs Java v1.11
 
 for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
@@ -115,7 +114,7 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 done
 
 
-sudo update-java-alternatives -s java-1.14.0-openjdk-amd64
+sudo update-java-alternatives -s java-1.14.0-openjdk-amd64 2> /dev/null
 # The other jars need Java v1.14
 
 
