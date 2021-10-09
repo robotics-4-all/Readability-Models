@@ -4,7 +4,8 @@
 # Also, ensure that the directories exist
 SCRIPTS_DIR=$(pwd) #TODO
 export METRICS_DIR="$(pwd)/metrics" #TODO
-readarray KEYWORDS < keywords_for_commits.txt
+readarray -t KEYWORDS < keywords_for_commits.txt
+# -t discards trailing newlines. Important for git log --grep
 
 
 # TODO cd to project's git directory. First clone it.
@@ -15,13 +16,10 @@ readarray KEYWORDS < keywords_for_commits.txt
 for keyword in "${KEYWORDS[@]}" ; do
 # Must use this syntax in order to use it as an array. stackoverflow.com/a/16452606
 
-	git log --all --grep="$keyword" --pretty=%H --regexp-ignore-case >> readability_commits_repeated.txt
-	# --all means search commits from all branches
+	git log --grep="$keyword" --pretty=%H --regexp-ignore-case >> readability_commits_repeated.txt
 	# --pretty=%H means to only write the hashes. Otherwise need to use "cut -f1 --delimiter=' '"
+	# --all would search commits from all branches. Don't use --all, because some commits exist multiple times
 	
-	#TODO maybe only grep in titles, not notes. Otherwise, 1 repo had 115k readability commits
-	# E.g: git log --all --oneline | grep --ignore-case "$keyword" | cut -f1 >> readability_commits_repeated.txt
-	# But this may be too cpu-intensive, to list all commits
 done
 
 sort -u readability_commits_repeated.txt > readability_commits_unique.txt
@@ -36,7 +34,7 @@ echo "Found $num_readab_commits readability commits!"
 # Find some random non-readability commits
 # How many? 2x as many as the readability
 
-git log --all -n200 --pretty=%H |
+git log -n200 --pretty=%H |
 	shuf --head-count=$((2*num_readab_commits)) > nonread_commits_unchecked.txt
 
 # We have to remove any possible readability commits
@@ -52,7 +50,7 @@ function runSMA () {
 
 	common_path=$(python3 -c "import sys,os.path; print(os.path.commonpath(sys.argv[1:]))" $files_changed )
 	
-	if [ -z $common_path ] ; then # If it's empty, no common subpath
+	if [ -z "$common_path" ] ; then # If it's empty, no common subpath
 		common_path="."
 	fi
 	
@@ -81,16 +79,17 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 	git checkout $commit
 	
 	# find list of files changed and num of lines changed
-	git diff --numstat --diff-filter=M HEAD^ > $METRICS_DIR/${short_hash}_numstat.txt
+	git diff --numstat --diff-filter=M HEAD^ | cut -f3 | grep '\.java$' > $METRICS_DIR/${short_hash}_files.txt
 	
 	# We only want files which exist before and after the commit. So no added/deleted.
 	# The option --diff-filter=M keeps only modified files.
+	# The 3rd column has the filenames. Only include .java files (maybe shouldn't? TODO)
 	
-	files_changed=$(cut -f3 $METRICS_DIR/${short_hash}_numstat.txt | grep '\.java$') # the 3rd column has the filenames
-	# only include .java files (maybe shouldn't? TODO)
-	#sed -E 's/.*\t.*\t(.*\.java)$/$1/;t;d' $METRICS_DIR/${short_hash}_numstat.txt
-	#cut -f3 $METRICS_DIR/${short_hash}_numstat.txt | grep '\.java$'
-	#grep --perl-regexp --only-matching '[^\t]+\.java$' $METRICS_DIR/${short_hash}_numstat.txt
+	files_changed=$(cat $METRICS_DIR/${short_hash}_files.txt)
+	
+	if [ -z "$files_changed" ] ; then # If no files changed, don't run anything
+		continue
+	fi
 	
 	runSMA after # run SourceMeter with minimal options
 	# Since they depend on the changed files, they should probably NOT run in parallel
@@ -126,15 +125,15 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 	$SCRIPTS_DIR/calc_metrics_file.py --setup > $METRICS_DIR/${short_hash}_after.csv
 	cp $METRICS_DIR/${short_hash}_after.csv $METRICS_DIR/${short_hash}_befor.csv
 	
+	# find list of files changed and num of lines changed. We did this above
+	files_changed=$(cat $METRICS_DIR/${short_hash}_files.txt)
+	
+	if [ -z "$files_changed" ] ; then # If no files changed, don't run anything
+		continue # before checkout to commit, which can take time
+	fi
+	
 	# checkout to after commit
 	git checkout $commit
-	
-	# find list of files changed and num of lines changed. We did 'git numstat' above
-	files_changed=$(cut -f3 $METRICS_DIR/${short_hash}_numstat.txt | grep '\.java$') # the 3rd column has the filenames
-	# only include .java files (maybe shouldn't? TODO)
-	#sed -E 's/.*\t.*\t(.*\.java)$/$1/;t;d' $METRICS_DIR/${short_hash}_numstat.txt
-	#cut -f3 $METRICS_DIR/${short_hash}_numstat.txt | grep '\.java$'
-	#grep --perl-regexp --only-matching '[^\t]+\.java$' $METRICS_DIR/${short_hash}_numstat.txt
 	
 	# use the result of SourceMeter for this commit
 	cp $METRICS_DIR/${short_hash}_sma_after.csv $METRICS_DIR/curr_sma_result.csv
