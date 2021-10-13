@@ -4,6 +4,10 @@ import re, subprocess, sys, os, csv
 from math import exp, fsum
 
 
+SCRIPTS_DIR = os.environ['SCRIPTS_DIR']
+METRICS_DIR = os.environ['METRICS_DIR']
+RSMJAR = SCRIPTS_DIR + '/rsm.jar'
+
 SMA_metrics = ['CC', 'CCL', 'CCO', 'CI', 'CLC', 'CLLC', 'LDC', 'LLDC', 'LCOM5', 'NL', 'NLE', 'WMC', 'CBO', 'CBOI', 'NII',
 'NOI', 'RFC', 'AD', 'CD', 'CLOC', 'DLOC', 'PDA', 'PUA', 'TCD', 'TCLOC', 'DIT', 'NOA', 'NOC', 'NOD', 'NOP', 'LLOC', 'LOC',
 'NA', 'NG', 'NLA', 'NLG', 'NLM', 'NLPA', 'NLPM', 'NLS', 'NM', 'NOS', 'NPA', 'NPM', 'NS', 'TLLOC', 'TLOC', 'TNA', 'TNG',
@@ -42,7 +46,7 @@ if not os.path.isfile(filename):
 
 ### Many metrics, Posnett, and Dorn
 
-raw = subprocess.check_output(['java', '-cp', 'rsm.jar',
+raw = subprocess.check_output(['java', '-cp', RSMJAR,
 	'it.unimol.readability.metric.runnable.ExtractMetrics', filename]).decode("utf-8")
 
 #comma_metrics = re.sub(r"^.+: (.{3,})\n", "\\1,", raw, 0, re.MULTILINE)
@@ -71,7 +75,7 @@ dorn_score = 1/(1 + exp( -tmp))
 # we dont call SMA here. We read its resulting file.
 # Which file? $METRICS_DIR/curr_sma_result.csv
 try:
-	reader = open(os.environ['METRICS_DIR'] + '/curr_sma_result.csv', 'r')
+	reader = open(METRICS_DIR + '/curr_sma_result.csv', 'r')
 	
 	csv_sma = csv.DictReader(reader)
 	
@@ -97,8 +101,7 @@ except OSError:
 
 ### Buse Weimer
 
-# Split to snippets of 8 lines, then give them to BuseWeimer jar
-command = "sed '0~8 s/$/\\n###/g' '{0}' | java -jar BW_readability.jar".format(filename)
+command = "sed '0~8 s/$/\\n###/g' '{0}' | java -jar {1}/BW_readability.jar".format(filename, SCRIPTS_DIR)
 raw = subprocess.check_output(command, shell=True).decode("utf-8")
 
 snippet_scores_str = raw.split('\n\n')[1:-1]
@@ -110,9 +113,10 @@ bw_score = fsum(map(float, snippet_scores_str)) / len(snippet_scores_str)
 
 
 ### Scalabrino
-
-raw = subprocess.check_output(['java', '-jar', 'rsm.jar', filename]).decode("utf-8")
-# TODO maybe quite faster to give all the files together ??
+# Needs readability.classifier in the current path (pwd). Is symlinked in calc_metrics_repo.sh
+raw = subprocess.check_output(['java', '-jar', RSMJAR, filename]).decode("utf-8")
+# TODO It can be quite faster to give all the files together.
+# 10 calls of 1 files : 21 seconds. 1 call of 10 files : 3 seconds. 7x speedup
 
 scalabrino_score = float( raw.split('\t')[-1] )
 # Gets the part after the last tab, and converts to float

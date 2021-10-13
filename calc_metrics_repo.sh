@@ -2,8 +2,9 @@
 
 # maybe these paths & consts should be defined outside, as "env"
 # Also, ensure that the directories exist
-SCRIPTS_DIR=$(pwd) #TODO
-export METRICS_DIR="$(pwd)/metrics" #TODO
+export SCRIPTS_DIR=$(readlink -f "$0" | xargs --null dirname) # location of current script
+# xargs --null ensures that spaces are not considered arg seperator
+export METRICS_DIR="$SCRIPTS_DIR/metrics" #TODO
 readarray -t KEYWORDS < keywords_for_commits.txt
 # -t discards trailing newlines. Important for git log --grep
 
@@ -49,6 +50,8 @@ sort nonread_commits_unchecked.txt | comm -13 readability_commits_unique.txt - >
 function runSMA () {
 
 	common_path=$(python3 -c "import sys,os.path; print(os.path.commonpath(sys.argv[1:]))" $files_changed )
+	# Doing -projectBaseDir=. makes it extremely slow at step DirectoryBasedAnalysisTask
+	# and it may even run out of ram...
 	
 	if [ -z "$common_path" ] ; then # If it's empty, no common subpath
 		common_path="."
@@ -58,8 +61,6 @@ function runSMA () {
 		-runFB=false -runPMD=false -runAndroidHunter=false -runMetricHunter=false \
 		-runVulnerabilityHunter=false -runFaultHunter=false -runRTEHunter=false \
 		-runDCF=false -runMET=true $files_changed
-		#TODO Doing -projectBaseDir=. makes it extremely slow at step DirectoryBasedAnalysisTask
-		# and it may even run out of ram... What to do...
 	
 	# We just want it to calc metrics: runMET
 }
@@ -117,6 +118,9 @@ sudo update-java-alternatives -s java-1.14.0-openjdk-amd64 2> /dev/null
 # The other jars need Java v1.14
 
 
+ln -s $SCRIPTS_DIR/scalabrino/readability.classifier . #TODO move it to just $SCRIPTS_DIR/readability.classifier
+# Symbolic link. Needed for Scalabrino's jar
+
 for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 
 	short_hash=$(echo $commit | cut -c1-10)
@@ -138,6 +142,8 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 	# use the result of SourceMeter for this commit
 	cp $METRICS_DIR/${short_hash}_sma_after.csv $METRICS_DIR/curr_sma_result.csv
 	
+	#TODO maybe here call rsm.jar for all changed files
+	
 	for file in $files_changed ; do
 	
 		# Calculate various metrics for file after commit. Store results
@@ -152,6 +158,8 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 	
 	# use the result of SourceMeter for (before) this commit
 	cp $METRICS_DIR/${short_hash}_sma_befor.csv $METRICS_DIR/curr_sma_result.csv
+	
+	#TODO maybe here call rsm.jar for all changed files
 	
 	for file in $files_changed ; do
 		# Calculate various metrics for file before commit. Store results
