@@ -118,6 +118,22 @@ sudo update-java-alternatives -s java-1.14.0-openjdk-amd64 2> /dev/null
 # The other jars need Java v1.14
 
 
+function loop_files_calc_metr () {
+
+	# use the result of SourceMeter for (before/after) this commit
+	cp $METRICS_DIR/${short_hash}_sma_${1}.csv $METRICS_DIR/curr_sma_result.csv
+	
+	#TODO maybe here call rsm.jar for all changed files
+	
+	for file in $files_changed ; do
+		# Calculate various metrics for file before/after commit. Store results
+		
+		$SCRIPTS_DIR/metric_generation.py $file >> $METRICS_DIR/${short_hash}_${1}.csv
+		# one line per file. Filename can be the first field
+	done
+}
+
+
 ln -s $SCRIPTS_DIR/scalabrino/readability.classifier . #TODO move it to just $SCRIPTS_DIR/readability.classifier
 # Symbolic link. Needed for Scalabrino's jar
 
@@ -139,34 +155,13 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 	# checkout to after commit
 	git checkout $commit
 	
-	# use the result of SourceMeter for this commit
-	cp $METRICS_DIR/${short_hash}_sma_after.csv $METRICS_DIR/curr_sma_result.csv
 	
-	#TODO maybe here call rsm.jar for all changed files
-	
-	for file in $files_changed ; do
-	
-		# Calculate various metrics for file after commit. Store results
-		
-		$SCRIPTS_DIR/metric_generation.py $file >> $METRICS_DIR/${short_hash}_after.csv
-		
-		# one line per file. Filename can be the first field
-	done
+	loop_files_calc_metr after
 	
 	
 	git checkout HEAD^ # to before commit
 	
-	# use the result of SourceMeter for (before) this commit
-	cp $METRICS_DIR/${short_hash}_sma_befor.csv $METRICS_DIR/curr_sma_result.csv
-	
-	#TODO maybe here call rsm.jar for all changed files
-	
-	for file in $files_changed ; do
-		# Calculate various metrics for file before commit. Store results
-		
-		$SCRIPTS_DIR/metric_generation.py $file >> $METRICS_DIR/${short_hash}_befor.csv
-	done
-	
+	loop_files_calc_metr befor
 	
 done
 
