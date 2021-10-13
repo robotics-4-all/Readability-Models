@@ -57,12 +57,21 @@ function runSMA () {
 		common_path="."
 	fi
 	
+	echo -n "Running SourceMeter for $short_hash - $1 ... "
+	
 	$SCRIPTS_DIR/SourceMeterJava -resultsDir=/tmp/SMAresults -projectName=$1 -projectBaseDir=$common_path \
 		-runFB=false -runPMD=false -runAndroidHunter=false -runMetricHunter=false \
 		-runVulnerabilityHunter=false -runFaultHunter=false -runRTEHunter=false \
-		-runDCF=false -runMET=true $files_changed
-	
+		-runDCF=false -runMET=true $files_changed > /dev/null
 	# We just want it to calc metrics: runMET
+	
+	sma_return=$? # The return code would be lost by the echo
+	if [[ $sma_return == 0 ]] ; then
+		echo " ok"
+	else
+		echo " sth went wrong"
+	fi
+	return "$sma_return"
 }
 
 #-----------------
@@ -77,7 +86,7 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 
 	short_hash=$(echo $commit | cut -c1-10)
 	
-	git checkout $commit
+	git checkout -q $commit # Quiet. Do not print stdout
 	
 	# find list of files changed and num of lines changed
 	git diff --numstat --diff-filter=M HEAD^ | cut -f3 | grep '\.java$' > $METRICS_DIR/${short_hash}_files.txt
@@ -100,7 +109,7 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 		continue # don't run SMA again for before commit
 	fi
 	
-	git checkout HEAD^ # to before commit
+	git checkout -q HEAD^ # Go to before commit
 	
 	runSMA befor
 	
@@ -149,19 +158,22 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 	files_changed=$(cat $METRICS_DIR/${short_hash}_files.txt)
 	
 	if [ -z "$files_changed" ] ; then # If no files changed, don't run anything
+		echo "Commit $short_hash has no files to check"
 		continue # before checkout to commit, which can take time
 	fi
 	
-	# checkout to after commit
-	git checkout $commit
+	echo -n "Checking $short_hash ... " # no trailing newline
 	
+	# checkout to after commit
+	git checkout -q $commit # Quiet. Do not print stdout
 	
 	loop_files_calc_metr after
 	
 	
-	git checkout HEAD^ # to before commit
+	git checkout -q HEAD^ # Go to before commit
 	
 	loop_files_calc_metr befor
 	
+	echo " ok" # for this commit
 done
 
