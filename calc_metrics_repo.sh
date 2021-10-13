@@ -59,7 +59,7 @@ function runSMA () {
 	
 	echo -n "Running SourceMeter for $short_hash - $1 ... "
 	
-	$SCRIPTS_DIR/SourceMeterJava -resultsDir=/tmp/SMAresults -projectName=$1 -projectBaseDir=$common_path \
+	"$SCRIPTS_DIR/SourceMeterJava" -resultsDir=/tmp/SMAresults -projectName=$1 -projectBaseDir=$common_path \
 		-runFB=false -runPMD=false -runAndroidHunter=false -runMetricHunter=false \
 		-runVulnerabilityHunter=false -runFaultHunter=false -runRTEHunter=false \
 		-runDCF=false -runMET=true $files_changed > /dev/null
@@ -89,13 +89,14 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 	git checkout -q $commit # Quiet. Do not print stdout
 	
 	# find list of files changed and num of lines changed
-	git diff --numstat --diff-filter=M HEAD^ | cut -f3 | grep '\.java$' > $METRICS_DIR/${short_hash}_files.txt
+	git diff --numstat --diff-filter=M HEAD^ | cut -f3 |
+		grep '\.java$' > "$METRICS_DIR/${short_hash}_files.txt"
 	
 	# We only want files which exist before and after the commit. So no added/deleted.
 	# The option --diff-filter=M keeps only modified files.
 	# The 3rd column has the filenames. Only include .java files (maybe shouldn't? TODO)
 	
-	files_changed=$(cat $METRICS_DIR/${short_hash}_files.txt)
+	files_changed=$(cat "$METRICS_DIR/${short_hash}_files.txt")
 	
 	if [ -z "$files_changed" ] ; then # If no files changed, don't run anything
 		continue
@@ -115,8 +116,8 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 	
 	
 	# keep only -Class.csv. * is for the timestamp
-	mv /tmp/SMAresults/after/java/*/after-Class.csv $METRICS_DIR/${short_hash}_sma_after.csv
-	mv /tmp/SMAresults/befor/java/*/befor-Class.csv $METRICS_DIR/${short_hash}_sma_befor.csv
+	mv /tmp/SMAresults/after/java/*/after-Class.csv "$METRICS_DIR/${short_hash}_sma_after.csv"
+	mv /tmp/SMAresults/befor/java/*/befor-Class.csv "$METRICS_DIR/${short_hash}_sma_befor.csv"
 	
 	rm -rf /tmp/SMAresults/
 	
@@ -130,20 +131,20 @@ sudo update-java-alternatives -s java-1.14.0-openjdk-amd64 2> /dev/null
 function loop_files_calc_metr () {
 
 	# use the result of SourceMeter for (before/after) this commit
-	cp $METRICS_DIR/${short_hash}_sma_${1}.csv $METRICS_DIR/curr_sma_result.csv
+	cp "$METRICS_DIR/${short_hash}_sma_${1}.csv" "$METRICS_DIR/curr_sma_result.csv"
 	
 	#TODO maybe here call rsm.jar for all changed files
 	
 	for file in $files_changed ; do
 		# Calculate various metrics for file before/after commit. Store results
 		
-		$SCRIPTS_DIR/metric_generation.py $file >> $METRICS_DIR/${short_hash}_${1}.csv
+		"$SCRIPTS_DIR/metric_generation.py" $file >> "$METRICS_DIR/${short_hash}_${1}.csv"
 		# one line per file. Filename can be the first field
 	done
 }
 
 
-ln -s $SCRIPTS_DIR/scalabrino/readability.classifier . #TODO move it to just $SCRIPTS_DIR/readability.classifier
+ln -s "$SCRIPTS_DIR/scalabrino/readability.classifier" . #TODO move it to just $SCRIPTS_DIR/readability.classifier
 # Symbolic link. Needed for Scalabrino's jar
 
 for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
@@ -151,11 +152,11 @@ for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
 	short_hash=$(echo $commit | cut -c1-10)
 	
 	# setup CSV files and their headers
-	$SCRIPTS_DIR/calc_metrics_file.py --setup > $METRICS_DIR/${short_hash}_after.csv
-	cp $METRICS_DIR/${short_hash}_after.csv $METRICS_DIR/${short_hash}_befor.csv
+	"$SCRIPTS_DIR/calc_metrics_file.py" --setup > "$METRICS_DIR/${short_hash}_after.csv"
+	cp "$METRICS_DIR/${short_hash}_after.csv" "$METRICS_DIR/${short_hash}_befor.csv"
 	
 	# find list of files changed and num of lines changed. We did this above
-	files_changed=$(cat $METRICS_DIR/${short_hash}_files.txt)
+	files_changed=$(cat "$METRICS_DIR/${short_hash}_files.txt")
 	
 	if [ -z "$files_changed" ] ; then # If no files changed, don't run anything
 		echo "Commit $short_hash has no files to check"
