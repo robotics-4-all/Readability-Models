@@ -137,7 +137,13 @@ function loop_files_calc_metr () {
 	# use the result of SourceMeter for (before/after) this commit
 	cp "$METRICS_DIR/${short_hash}_sma_${1}.csv" "$METRICS_DIR/curr_sma_result.csv"
 	
-	#TODO maybe here call rsm.jar for all changed files
+	# Run Scalabrino once for all files: faster.
+	# 10 calls of 1 files : 21 seconds. 1 call of 10 files : 3 seconds. 7x speedup
+	java -jar "$SCRIPTS_DIR/rsm.jar" $files_changed |
+		tail --lines=+3 > "$METRICS_DIR/scalabrino_tmp.txt"
+	# tail discards the first 2 lines.
+	# The jar needs readability.classifier in the current path (pwd). Is symlinked in calc_metrics_repo.sh
+	# The output file will not stay, it will be written over, no problem. It is used just below.
 	
 	for file in $files_changed ; do
 		# Calculate various metrics for file before/after commit. Store results

@@ -119,14 +119,17 @@ bw_score = fsum(map(float, snippet_scores_str)) / len(snippet_scores_str)
 
 
 ### Scalabrino
-# Needs readability.classifier in the current path (pwd). Is symlinked in calc_metrics_repo.sh
-raw = subprocess.check_output(['java', '-jar', RSMJAR, filename]).decode("utf-8")
-# TODO It can be quite faster to give all the files together.
-# 10 calls of 1 files : 21 seconds. 1 call of 10 files : 3 seconds. 7x speedup
+with open(METRICS_DIR + "/scalabrino_tmp.txt","r") as file:
+	for line in file:
 
-scalabrino_score = float( raw.split('\t')[-1] )
-# Gets the part after the last tab, and converts to float
+		if line.split('\t')[0] == filename:
 
+			scalabrino_score = float( line.split('\t')[-1] )
+			# Gets the part after the last tab, and converts to float
+			
+			break
+	else: # If it was not found
+		scalabrino_score = -1
 
 
 ### Final stuff. Append to csv
