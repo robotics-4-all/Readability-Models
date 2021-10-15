@@ -59,11 +59,15 @@ function runSMA () {
 	
 	echo -n "Running SourceMeter for $short_hash - $1 ... "
 	
+	#TODO mhpws na kanoyme anti gia update-java-alternatives, etsi: ?
+	#env PATH="$JAVA11_DIR" "$SCRIPTS_DIR/SourceMeterJava" -resultsDir=.....
+	# me JAVA11_DIR="/usr/lib/jvm/java-11-openjdk-amd64/bin"
+	
 	"$SCRIPTS_DIR/SourceMeterJava" -resultsDir=/tmp/SMAresults -projectName=$1 -projectBaseDir=$common_path \
 		-runFB=false -runPMD=false -runAndroidHunter=false -runMetricHunter=false \
 		-runVulnerabilityHunter=false -runFaultHunter=false -runRTEHunter=false \
-		-runDCF=false -runMET=true $files_changed > /dev/null
-	# We just want it to calc metrics: runMET
+		-runDCF=true -runMET=true $files_changed > /dev/null
+	# We just want it to calc metrics and duplication check: runMET and runDCF
 	
 	sma_return=$? # The return code would be lost by the echo
 	if [[ $sma_return == 0 ]] ; then
@@ -125,7 +129,7 @@ done
 
 
 sudo update-java-alternatives -s java-1.14.0-openjdk-amd64 2> /dev/null
-# The other jars need Java v1.14
+# The other jars need Java v1.14 or v.1.8 ?!
 
 
 function loop_files_calc_metr () {
@@ -138,7 +142,7 @@ function loop_files_calc_metr () {
 	for file in $files_changed ; do
 		# Calculate various metrics for file before/after commit. Store results
 		
-		"$SCRIPTS_DIR/metric_generation.py" $file >> "$METRICS_DIR/${short_hash}_${1}.csv"
+		"$SCRIPTS_DIR/calc_metrics_file.py" $file >> "$METRICS_DIR/${short_hash}_${1}.csv"
 		# one line per file. Filename can be the first field
 	done
 }

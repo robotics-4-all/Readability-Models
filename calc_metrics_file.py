@@ -4,8 +4,14 @@ import re, subprocess, sys, os, csv
 from math import exp, fsum
 
 
-SCRIPTS_DIR = os.environ['SCRIPTS_DIR']
-METRICS_DIR = os.environ['METRICS_DIR']
+try:
+	SCRIPTS_DIR = os.environ['SCRIPTS_DIR']
+except KeyError:
+	SCRIPTS_DIR = os.path.dirname(os.path.realpath(__file__))
+try:
+	METRICS_DIR = os.environ['METRICS_DIR']
+except KeyError:
+	METRICS_DIR = SCRIPTS_DIR + '/metrics' #TODO maybe current dir /metrics
 RSMJAR = SCRIPTS_DIR + '/rsm.jar'
 
 SMA_metrics = ['CC', 'CCL', 'CCO', 'CI', 'CLC', 'CLLC', 'LDC', 'LLDC', 'LCOM5', 'NL', 'NLE', 'WMC', 'CBO', 'CBOI', 'NII',
