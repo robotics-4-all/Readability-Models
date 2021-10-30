@@ -1,50 +1,17 @@
+#!/bin/bash
+
+export SCRIPTS_DIR
+export METRICS_DIR
+# As inherithed
 
 
-# maybe these paths & consts should be defined outside, as "env"
-# Also, ensure that the directories exist
-export SCRIPTS_DIR=$(readlink -f "$0" | xargs --null dirname) # location of current script
-# xargs --null ensures that spaces are not considered arg seperator
-export METRICS_DIR="$SCRIPTS_DIR/metrics" #TODO
-readarray -t KEYWORDS < keywords_for_commits.txt
-# -t discards trailing newlines. Important for git log --grep
+if [ -z "$1" -o ! -f "$1" ] ; then # Check the first argument
+	echo "Error: argument not given or file not exists!"
+	echo "Usage: $0 commits_list_file"
+	exit 1
+fi
 
-
-# TODO cd to project's git directory. First clone it.
-
-
-# find radability commits
-
-for keyword in "${KEYWORDS[@]}" ; do
-# Must use this syntax in order to use it as an array. stackoverflow.com/a/16452606
-
-	git log --grep="$keyword" --pretty=%H --regexp-ignore-case >> readability_commits_repeated.txt
-	# --pretty=%H means to only write the hashes. Otherwise need to use "cut -f1 --delimiter=' '"
-	# --all would search commits from all branches. Don't use --all, because some commits exist multiple times
-	
-done
-
-sort -u readability_commits_repeated.txt > readability_commits_unique.txt
-# keep only uniques
-
-
-num_readab_commits=$(wc --lines < readability_commits_unique.txt)
-
-echo "Found $num_readab_commits readability commits!"
-
-
-# Find some random non-readability commits
-# How many? 2x as many as the readability
-
-git log -n200 --pretty=%H |
-	shuf --head-count=$((2*num_readab_commits)) > nonread_commits_unchecked.txt
-
-# We have to remove any possible readability commits
-
-sort nonread_commits_unchecked.txt | comm -13 readability_commits_unique.txt - > nonread_commits.txt
-
-# comm -13 outputs only lines which are only in file 2. '-' means stdin
-
-#TODO rm readability_commits_repeated.txt nonread_commits_unchecked.txt
+commits_file="$1"
 
 
 function runSMA () {
@@ -86,7 +53,7 @@ sudo update-java-alternatives -s java-1.11.0-openjdk-amd64 2> /dev/null
 # the redirection 2> is for "error: no alternatives for xyz"
 # SourceMeter needs Java v1.11
 
-for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
+for commit in $(cat "$commits_file"); do
 
 	short_hash=$(echo $commit | cut -c1-10)
 	
@@ -157,7 +124,7 @@ function loop_files_calc_metr () {
 ln -s "$SCRIPTS_DIR/scalabrino/readability.classifier" . #TODO move it to just $SCRIPTS_DIR/readability.classifier
 # Symbolic link. Needed for Scalabrino's jar
 
-for commit in $(cat readability_commits_unique.txt nonread_commits.txt); do
+for commit in $(cat "$commits_file"); do
 
 	short_hash=$(echo $commit | cut -c1-10)
 	
