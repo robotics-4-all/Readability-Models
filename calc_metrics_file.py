@@ -12,7 +12,7 @@ try:
 	METRICS_DIR = os.environ['METRICS_DIR']
 except KeyError:
 	METRICS_DIR = SCRIPTS_DIR + '/metrics' #TODO maybe current dir /metrics
-RSMJAR = SCRIPTS_DIR + '/rsm.jar'
+RSMJAR = SCRIPTS_DIR + '/models/rsm.jar'
 
 SMA_metrics = ['CC', 'CCL', 'CCO', 'CI', 'CLC', 'CLLC', 'LDC', 'LLDC', 'LCOM5', 'NL', 'NLE', 'WMC', 'CBO', 'CBOI', 'NII',
 'NOI', 'RFC', 'AD', 'CD', 'CLOC', 'DLOC', 'PDA', 'PUA', 'TCD', 'TCLOC', 'DIT', 'NOA', 'NOC', 'NOD', 'NOP', 'LLOC', 'LOC',
@@ -107,7 +107,7 @@ except OSError:
 
 ### Buse Weimer
 
-command = "sed '0~8 s/$/\\n###/g' '{0}' | java -jar {1}/BW_readability.jar".format(filename, SCRIPTS_DIR)
+command = "sed '0~8 s/$/\\n###/g' '{0}' | java -jar {1}/models/BW_readability.jar".format(filename, SCRIPTS_DIR)
 raw = subprocess.check_output(command, shell=True).decode("utf-8")
 
 snippet_scores_str = raw.split('\n\n')[1:-1]
@@ -119,7 +119,7 @@ bw_score = fsum(map(float, snippet_scores_str)) / len(snippet_scores_str)
 
 
 ### Scalabrino
-with open(METRICS_DIR + "/scalabrino_tmp.txt","r") as file:
+with open("scalabrino_tmp.txt","r") as file:
 	for line in file:
 
 		if line.split('\t')[0] == filename:

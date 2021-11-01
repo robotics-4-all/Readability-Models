@@ -6,7 +6,7 @@
 export SCRIPTS_DIR=$(readlink -f "$0" | xargs --null dirname) # location of current script
 # xargs --null ensures that spaces are not considered arg seperator
 # TODO METRICS_DIR="$(dirname $SCRIPTS_DIR)/metrics" # later we add /$repo_name
-METRICS_DIR="$SCRIPTS_DIR)/metrics" # later we add /$repo_name
+METRICS_DIR="$SCRIPTS_DIR/metrics" # later we add /$repo_name
 readarray -t KEYWORDS < keywords_for_commits.txt
 # -t discards trailing newlines. Important for git log --grep
 
@@ -25,14 +25,19 @@ export METRICS_DIR="$METRICS_DIR/$repo_name"
 parallel="${2:-4}"
 # In how many parts to split the commits. Is the 2nd argument. Default = 4.
 
+[ "$parallel" -eq "$parallel" -a "$parallel" -gt 0 ] 2> /dev/null # Check if it is a positive int
+if [[ $? != 0 ]] ; then
+	echo "Error: The 2nd argument (parallel) must be a positive integer. Exiting"
+	exit 1
+fi
 
 
 if [ -d "$repo_name" ] ; then # if the directory already exists
 	echo "Warning: the directory $repo_name already exists. Continuing with it.."
 	
 else # Clone it grom github
-	
-	git clone "https://github.com/${repo_full}.git" > /dev/null
+	echo "Cloning from github..."
+	git clone "https://github.com/${repo_full}.git"
 	
 	if [[ $? != 0 ]] ; then
 		echo 'Encountered problem at git clone. Exiting..';
@@ -93,7 +98,7 @@ if [[ $commits_per_node < 5 ]] ; then
 	commits_per_node=$(( num_readab_commits + num_nonread_commits ))
 fi
 
-cat calc_metrics_repo.sh nonread_commits.txt |
+cat readability_commits_unique.txt nonread_commits.txt |
 	split --numeric-suffixes=1 --suffix-length=2 --number=r/$parallel - commits
 # split to $parallel files commits01, commits02... "commits" is the prefix
 # "r/" = do not break lines and use round-robin. "-" is to read from stdin
@@ -103,20 +108,36 @@ cat calc_metrics_repo.sh nonread_commits.txt |
 
 cd ..
 for i in $(seq 2 "$parallel" | xargs printf "%02d ") ; do # 02 03 04 ...
+	
+	if [ "$i" = '00' ] ; then # if seq is empty, printf without args would print 00. Don't want that
+		break
+	fi
+	
 	cp -r "$repo_name" "$repo_name-$i"
-	mv "commits$i" "$repo_name-$i/"
+	mv "$repo_name/commits$i" "$repo_name-$i/"
 done
 mv "$repo_name" "$repo_name-01"
-mv commits01 "$repo_name-01/"
+
+echo 'ready to launch calc_metrics_repo. Proceed?'
+read
+if [ "$REPLY" = 'n' -o "$REPLY" = 'no' ] ; then
+	exit 0
+fi
 
 
 # Call calc_metrics_repo
 for i in $(seq "$parallel" | xargs printf "%02d ") ; do
 	cd "$repo_name-$i"
+
+	echo "starting $i"
 	
 	"$SCRIPTS_DIR/calc_metrics_repo.sh" "commits$i" & #TODO this is basic
 	# srun --ntasks=1 "$SCRIPTS_DIR/calc_metrics_repo.sh" "commits$i" &
 	
 	cd ..
 done
+
+wait # for all started processes
+
+echo "all done"
 

@@ -4,6 +4,8 @@ export SCRIPTS_DIR
 export METRICS_DIR
 # As inherithed
 
+JAVA11DIR='/mnt/scratch_b/users/a/anestisv/diplom/java11/usr/lib/jvm/java-11-openjdk-11.0.13.0.8-1.el7_9.x86_64/bin/'
+
 
 if [ -z "$1" -o ! -f "$1" ] ; then # Check the first argument
 	echo "Error: argument not given or file not exists!"
@@ -13,6 +15,10 @@ fi
 
 commits_file="$1"
 
+
+if [ ! -d "$METRICS_DIR" ] ; then
+	mkdir -p "$METRICS_DIR"
+fi
 
 function runSMA () {
 
@@ -29,8 +35,10 @@ function runSMA () {
 	#TODO mhpws na kanoyme anti gia update-java-alternatives, etsi: ?
 	#env PATH="$JAVA11_DIR" "$SCRIPTS_DIR/SourceMeterJava" -resultsDir=.....
 	# me JAVA11_DIR="/usr/lib/jvm/java-11-openjdk-amd64/bin"
+	# This is if we are not root and cannot change java alternatives
 	
-	"$SCRIPTS_DIR/SourceMeterJava" -resultsDir=/tmp/SMAresults -projectName=$1 -projectBaseDir=$common_path \
+	env PATH="$JAVA11DIR" "$SCRIPTS_DIR/sma-9/SourceMeterJava" -resultsDir=/tmp/SMAresults \
+		-projectName=$1 -projectBaseDir=$common_path \
 		-runFB=false -runPMD=false -runAndroidHunter=false -runMetricHunter=false \
 		-runVulnerabilityHunter=false -runFaultHunter=false -runRTEHunter=false \
 		-runDCF=true -runMET=true $files_changed > /dev/null
@@ -106,8 +114,8 @@ function loop_files_calc_metr () {
 	
 	# Run Scalabrino once for all files: faster.
 	# 10 calls of 1 files : 21 seconds. 1 call of 10 files : 3 seconds. 7x speedup
-	java -jar "$SCRIPTS_DIR/rsm.jar" $files_changed |
-		tail --lines=+3 > "$METRICS_DIR/scalabrino_tmp.txt"
+	java -jar "$SCRIPTS_DIR/models/rsm.jar" $files_changed |
+		tail --lines=+3 > scalabrino_tmp.txt
 	# tail discards the first 2 lines.
 	# The jar needs readability.classifier in the current path (pwd). Is symlinked in calc_metrics_repo.sh
 	# The output file will not stay, it will be written over, no problem. It is used just below.
@@ -121,7 +129,7 @@ function loop_files_calc_metr () {
 }
 
 
-ln -s "$SCRIPTS_DIR/scalabrino/readability.classifier" . #TODO move it to just $SCRIPTS_DIR/readability.classifier
+ln -s "$SCRIPTS_DIR/models/readability.classifier" .
 # Symbolic link. Needed for Scalabrino's jar
 
 for commit in $(cat "$commits_file"); do
