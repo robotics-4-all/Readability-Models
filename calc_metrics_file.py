@@ -119,7 +119,8 @@ bw_score = fsum(map(float, snippet_scores_str)) / len(snippet_scores_str)
 
 
 ### Scalabrino
-with open("scalabrino_tmp.txt","r") as file:
+try:
+	file = open("scalabrino_tmp.txt","r")
 	for line in file:
 
 		if line.split('\t')[0] == filename:
@@ -130,6 +131,13 @@ with open("scalabrino_tmp.txt","r") as file:
 			break
 	else: # If it was not found
 		scalabrino_score = -1
+	
+	file.close()
+	del file
+	
+except OSError:
+	print('scalabrino_tmp.txt does not exist', file=sys.stderr)
+	scalabrino_score = -1
 
 
 ### Final stuff. Append to csv

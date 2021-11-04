@@ -91,7 +91,7 @@ num_nonread_commits=$(wc --lines < nonread_commits.txt)
 
 commits_per_node=$(( (num_readab_commits + num_nonread_commits) / parallel + 1 ))
 
-if [[ $commits_per_node < 5 ]] ; then
+if [[ commits_per_node < 5 ]] ; then
 	echo "Warning: Would be <5 commits per node. Not worth to parallelize"
 	
 	parallel=1

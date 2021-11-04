@@ -57,7 +57,7 @@ function runSMA () {
 #for each commit: (from x eg.50 readability commits, and 2*x random other commits for comparison)
 
 
-sudo update-java-alternatives -s java-1.11.0-openjdk-amd64 2> /dev/null
+#sudo update-java-alternatives -s java-1.11.0-openjdk-amd64 2> /dev/null
 # the redirection 2> is for "error: no alternatives for xyz"
 # SourceMeter needs Java v1.11
 
@@ -65,7 +65,7 @@ for commit in $(cat "$commits_file"); do
 
 	short_hash=$(echo $commit | cut -c1-10)
 	
-	git checkout -q $commit # Quiet. Do not print stdout
+	git checkout $commit
 	
 	# find list of files changed and num of lines changed
 	git diff --numstat --diff-filter=M HEAD^ | cut -f3 |
@@ -89,7 +89,7 @@ for commit in $(cat "$commits_file"); do
 		continue # don't run SMA again for before commit
 	fi
 	
-	git checkout -q HEAD^ # Go to before commit
+	git checkout HEAD^ # Go to before commit
 	
 	runSMA befor
 	
@@ -103,7 +103,7 @@ for commit in $(cat "$commits_file"); do
 done
 
 
-sudo update-java-alternatives -s java-1.14.0-openjdk-amd64 2> /dev/null
+#sudo update-java-alternatives -s java-1.14.0-openjdk-amd64 2> /dev/null
 # The other jars need Java v1.14 or v.1.8 ?!
 
 
@@ -123,21 +123,23 @@ function loop_files_calc_metr () {
 	for file in $files_changed ; do
 		# Calculate various metrics for file before/after commit. Store results
 		
-		"$SCRIPTS_DIR/calc_metrics_file.py" $file >> "$METRICS_DIR/${short_hash}_${1}.csv"
+		python3 "$SCRIPTS_DIR/calc_metrics_file.py" $file >> "$METRICS_DIR/${short_hash}_${1}.csv"
 		# one line per file. Filename can be the first field
 	done
 }
 
 
-ln -s "$SCRIPTS_DIR/models/readability.classifier" .
-# Symbolic link. Needed for Scalabrino's jar
+if [ ! -f readability.classifier ] ; then
+	ln -s "$SCRIPTS_DIR/models/readability.classifier" .
+	# Symbolic link. Needed for Scalabrino's jar. Don't make if it exists
+fi
 
 for commit in $(cat "$commits_file"); do
 
 	short_hash=$(echo $commit | cut -c1-10)
 	
 	# setup CSV files and their headers
-	"$SCRIPTS_DIR/calc_metrics_file.py" --setup > "$METRICS_DIR/${short_hash}_after.csv"
+	python3 "$SCRIPTS_DIR/calc_metrics_file.py" --setup > "$METRICS_DIR/${short_hash}_after.csv"
 	cp "$METRICS_DIR/${short_hash}_after.csv" "$METRICS_DIR/${short_hash}_befor.csv"
 	
 	# find list of files changed and num of lines changed. We did this above
@@ -151,12 +153,12 @@ for commit in $(cat "$commits_file"); do
 	echo -n "Checking $short_hash ... " # no trailing newline
 	
 	# checkout to after commit
-	git checkout -q $commit # Quiet. Do not print stdout
+	git checkout $commit
 	
 	loop_files_calc_metr after
 	
 	
-	git checkout -q HEAD^ # Go to before commit
+	git checkout HEAD^ # Go to before commit
 	
 	loop_files_calc_metr befor
 	
