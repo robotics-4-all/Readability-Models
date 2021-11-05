@@ -11,6 +11,15 @@ readarray -t KEYWORDS < keywords_for_commits.txt
 # -t discards trailing newlines. Important for git log --grep
 
 
+# Handler for sigint, sigterm. To kill any children.
+function exit_handler () {
+	kill ${children[@]}
+	mv "$SCRIPTS_DIR/$repo_name-01" "$SCRIPTS_DIR/$repo_name"
+}
+children=()
+trap exit_handler INT
+trap exit_handler TERM
+
 
 if [ -z "$1" -o "$1" == "--help" -o "$1" == "-h" ] ; then
 	echo "Usage: $0 ghuser/ghrepo [parallel=4]"
@@ -133,6 +142,8 @@ for i in $(seq "$parallel" | xargs printf "%02d ") ; do
 	
 	"$SCRIPTS_DIR/calc_metrics_repo.sh" "commits$i" & #TODO this is basic
 	# srun --ntasks=1 "$SCRIPTS_DIR/calc_metrics_repo.sh" "commits$i" &
+	echo "($i) pid: $!"
+	children+=($!) # add pid to list of children in case of sigterm
 	
 	cd ..
 done

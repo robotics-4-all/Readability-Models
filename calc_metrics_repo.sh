@@ -65,7 +65,7 @@ for commit in $(cat "$commits_file"); do
 
 	short_hash=$(echo $commit | cut -c1-10)
 	
-	git checkout $commit
+	git checkout -f $commit # -f = force, overwrite files.
 	
 	# find list of files changed and num of lines changed
 	git diff --numstat --diff-filter=M HEAD^ | cut -f3 |
@@ -73,7 +73,7 @@ for commit in $(cat "$commits_file"); do
 	
 	# We only want files which exist before and after the commit. So no added/deleted.
 	# The option --diff-filter=M keeps only modified files.
-	# The 3rd column has the filenames. Only include .java files (maybe shouldn't? TODO)
+	# The 3rd column has the filenames. Only include .java files
 	
 	files_changed=$(cat "$METRICS_DIR/${short_hash}_files.txt")
 	
@@ -89,7 +89,7 @@ for commit in $(cat "$commits_file"); do
 		continue # don't run SMA again for before commit
 	fi
 	
-	git checkout HEAD^ # Go to before commit
+	git checkout -f HEAD^ # Go to before commit
 	
 	runSMA befor
 	
@@ -134,6 +134,7 @@ if [ ! -f readability.classifier ] ; then
 	# Symbolic link. Needed for Scalabrino's jar. Don't make if it exists
 fi
 
+# TODO MERGE THE LOOPS! Since we don't change Java versions with update, just git-checkout once!
 for commit in $(cat "$commits_file"); do
 
 	short_hash=$(echo $commit | cut -c1-10)
@@ -153,12 +154,12 @@ for commit in $(cat "$commits_file"); do
 	echo -n "Checking $short_hash ... " # no trailing newline
 	
 	# checkout to after commit
-	git checkout $commit
+	git checkout -f $commit
 	
 	loop_files_calc_metr after
 	
 	
-	git checkout HEAD^ # Go to before commit
+	git checkout -f HEAD^ # Go to before commit
 	
 	loop_files_calc_metr befor
 	
