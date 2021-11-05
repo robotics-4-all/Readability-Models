@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import re, subprocess, sys, os, csv
-from math import exp, fsum
+from math import exp, fsum, inf
 
 
 try:
@@ -41,10 +41,6 @@ if sys.argv[1] == "--setup" :
 
 
 filename = sys.argv[1]
-if filename == '-':
-	filename = "/home/anestis/Επιφάνεια εργασίας/tmp_diplom/testfile2.java"
-#TODO remove
-
 if not os.path.isfile(filename):
 	print("Error. File does not exist", file=sys.stderr)
 	sys.exit(1)
@@ -53,7 +49,8 @@ if not os.path.isfile(filename):
 ### Many metrics, Posnett, and Dorn
 
 raw = subprocess.check_output(['java', '-cp', RSMJAR,
-	'it.unimol.readability.metric.runnable.ExtractMetrics', filename]).decode("utf-8")
+	'it.unimol.readability.metric.runnable.ExtractMetrics', filename],
+	stderr=subprocess.DEVNULL, encoding="utf-8") # stderr > /dev/null
 
 #comma_metrics = re.sub(r"^.+: (.{3,})\n", "\\1,", raw, 0, re.MULTILINE)
 
@@ -68,13 +65,18 @@ if len(metrics) != 111: # 1 was the filename
 	print("Warning! There were not 110 metrics")
 
 
+def sigmoid(x):
+	if -x > 700:
+		x = -inf # To prevent overflow error in exp()
+	return 1/(1 + exp(-x))
+
 # POSNETT
 tmp = 8.87 - 1.5*metrics['Posnett entropy'] - 0.033*metrics['Posnett volume'] + 0.4*metrics['Posnett lines']
-posnett_score = 1/(1 + exp( -tmp))
+posnett_score = sigmoid(tmp)
 
 
 tmp = 1 # TODO DORN MODEL
-dorn_score = 1/(1 + exp( -tmp))
+dorn_score = sigmoid(tmp)
 
 
 ### Source Meter Analyser
@@ -108,7 +110,7 @@ except OSError:
 ### Buse Weimer
 
 command = "sed '0~8 s/$/\\n###/g' '{0}' | java -jar {1}/models/BW_readability.jar".format(filename, SCRIPTS_DIR)
-raw = subprocess.check_output(command, shell=True).decode("utf-8")
+raw = subprocess.check_output(command, shell=True, encoding="utf-8")
 
 snippet_scores_str = raw.split('\n\n')[1:-1]
 

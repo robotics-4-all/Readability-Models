@@ -7,13 +7,16 @@ export SCRIPTS_DIR=$(readlink -f "$0" | xargs --null dirname) # location of curr
 # xargs --null ensures that spaces are not considered arg seperator
 # TODO METRICS_DIR="$(dirname $SCRIPTS_DIR)/metrics" # later we add /$repo_name
 METRICS_DIR="$SCRIPTS_DIR/metrics" # later we add /$repo_name
-readarray -t KEYWORDS < keywords_for_commits.txt
+readarray -t KEYWORDS < "$SCRIPTS_DIR/keywords_for_commits.txt"
 # -t discards trailing newlines. Important for git log --grep
 
 
 # Handler for sigint, sigterm. To kill any children.
 function exit_handler () {
-	kill ${children[@]}
+	for child_pid in "${children[@]}" ; do
+		kill -kill -$child_pid # - before the pid, so that we also kill their subprocesses
+	done
+	
 	mv "$SCRIPTS_DIR/$repo_name-01" "$SCRIPTS_DIR/$repo_name"
 }
 children=()
