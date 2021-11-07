@@ -11,13 +11,36 @@ readarray -t KEYWORDS < "$SCRIPTS_DIR/keywords_for_commits.txt"
 # -t discards trailing newlines. Important for git log --grep
 
 
+if [ -z "$FILES_DIR" ] ; then
+	rundir_avail=$(df --output=avail "$XDG_RUNTIME_DIR/" | tail -n1)
+	tmpdir_avail=$(df --output=avail /tmp/ | tail -n1)
+	
+	if [ $rundir_avail -gt 1800000 -a -w "$XDG_RUNTIME_DIR/" ] ; then # min 1.8 GB free, and writable
+		FILES_DIR="$XDG_RUNTIME_DIR/readabl_dipl"
+	elif [ $tmpdir_avail -gt 1800000 -a -w /tmp/ ] ; then
+		FILES_DIR=/tmp/readabl_dipl
+	else
+		FILES_DIR="$SCRIPTS_DIR"
+	fi
+	
+	echo "Using FILES_DIR = $FILES_DIR"
+	echo "If you want a different one, set the env variable FILES_DIR"
+fi
+
+if [ ! -d "$FILES_DIR" ] ; then
+	mkdir -p "$FILES_DIR"
+fi
+
+
 # Handler for sigint, sigterm. To kill any children.
 function exit_handler () {
+	echo 'Received exit signal'
 	for child_pid in "${children[@]}" ; do
 		kill -kill -$child_pid # - before the pid, so that we also kill their subprocesses
 	done
 	
-	mv "$SCRIPTS_DIR/$repo_name-01" "$SCRIPTS_DIR/$repo_name"
+	mv "$FILES_DIR/$repo_name-01" "$FILES_DIR/$repo_name"
+	exit 0
 }
 children=()
 trap exit_handler INT
@@ -44,12 +67,16 @@ if [[ $? != 0 ]] ; then
 fi
 
 
-if [ -d "$repo_name" ] ; then # if the directory already exists
-	echo "Warning: the directory $repo_name already exists. Continuing with it.."
+if [ -d "$FILES_DIR/$repo_name" ] ; then # if the directory already exists
+	echo "Warning: the directory $FILES_DIR/$repo_name already exists. Continuing with it.."
+	
+elif [ -d "$repo_name" ] ; then
+	echo "The directory $repo_name already exists. Copying it to FILES_DIR.."
+	cp -r "$repo_name" "$FILES_DIR/$repo_name"
 	
 else # Clone it grom github
 	echo "Cloning from github..."
-	git clone "https://github.com/${repo_full}.git"
+	git clone "https://github.com/${repo_full}.git" "$FILES_DIR/$repo_name"
 	
 	if [[ $? != 0 ]] ; then
 		echo 'Encountered problem at git clone. Exiting..';
@@ -57,12 +84,14 @@ else # Clone it grom github
 	fi
 fi
 
-cd "$repo_name"
+cd "$FILES_DIR/$repo_name"
 
 
 ## find radability commits
 
 rm -f readability_commits_repeated.txt # Because we will append to it.
+
+git checkout -f master # we may be detached, not at the main branch.
 
 for keyword in "${KEYWORDS[@]}" ; do
 # Must use this syntax in order to use it as an array. stackoverflow.com/a/16452606
@@ -103,7 +132,7 @@ num_nonread_commits=$(wc --lines < nonread_commits.txt)
 
 commits_per_node=$(( (num_readab_commits + num_nonread_commits) / parallel + 1 ))
 
-if [[ commits_per_node < 5 ]] ; then
+if [ $commits_per_node -lt 5 ] ; then # Don't use <. This compares lexicographically
 	echo "Warning: Would be <5 commits per node. Not worth to parallelize"
 	
 	parallel=1
@@ -118,7 +147,7 @@ cat readability_commits_unique.txt nonread_commits.txt |
 
 # Make copies of the folder and move the commits lists
 
-cd ..
+cd .. # now we are at $FILES_DIR
 for i in $(seq 2 "$parallel" | xargs printf "%02d ") ; do # 02 03 04 ...
 	
 	if [ "$i" = '00' ] ; then # if seq is empty, printf without args would print 00. Don't want that
