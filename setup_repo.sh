@@ -1,3 +1,4 @@
+#!/usr/bin/bash
 
 #TODO add slurm options
 
@@ -11,6 +12,7 @@ readarray -t KEYWORDS < "$SCRIPTS_DIR/keywords_for_commits.txt"
 # -t discards trailing newlines. Important for git log --grep
 
 
+# Store the repo to be analysed in this folder. This can be in RAM (like tmpfs) for faster
 if [ -z "$FILES_DIR" ] ; then
 	rundir_avail=$(df --output=avail "$XDG_RUNTIME_DIR/" | tail -n1)
 	tmpdir_avail=$(df --output=avail /tmp/ | tail -n1)
@@ -30,6 +32,8 @@ fi
 if [ ! -d "$FILES_DIR" ] ; then
 	mkdir -p "$FILES_DIR"
 fi
+
+module load gcc/9.2 python/3.8 # for hpc
 
 
 # Handler for sigint, sigterm. To kill any children.
@@ -165,6 +169,7 @@ if [ "$REPLY" = 'n' -o "$REPLY" = 'no' ] ; then
 	exit 0
 fi
 
+date -Iseconds
 
 # Call calc_metrics_repo
 for i in $(seq "$parallel" | xargs printf "%02d ") ; do
@@ -183,4 +188,5 @@ done
 wait # for all started processes
 
 echo "all done"
+date -Iseconds
 
