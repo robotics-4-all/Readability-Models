@@ -1,6 +1,11 @@
 #!/usr/bin/bash
 
-#TODO add slurm options
+#SBATCH --time=04:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --nodes=1
+#SBATCH --ntasks=4
+#SBATCH --mem=32G
+#TODO find best slurm options
 
 # maybe these paths & consts should be defined outside, as "env"
 # Also, ensure that the directories exist
