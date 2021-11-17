@@ -33,14 +33,15 @@ function runSMA () {
 	
 	cp --parents -t filesForEval/ "${files_changed[@]}" # keep the dir structure
 	
+	#rm -rf "$SMA_RES_DIR/$1" # No need, because we mv Class.csv and Method.csv, so they won;t exist
+	
 	echo -n "Running SourceMeter for $short_hash - $1 ... "
 	
-	# Instead of update-java-alternatives,
-	# This is if we are not root and cannot change java alternatives
-	
+	# SourceMeter needs Java v1.11
+	# Instead of update-java-alternatives, we set the PATH for java v11 (because we are not root)
 	# Also chdir, so that it only runs for the changed files
 	cd filesForEval # hpc doesn't support env --chdir
-	env PATH="$JAVA11DIR" "$SCRIPTS_DIR/sma-9/SourceMeterJava" -resultsDir=/tmp/SMAresults \
+	env PATH="$JAVA11DIR" "$SCRIPTS_DIR/sma-9/SourceMeterJava" -resultsDir=$SMA_RES_DIR \
 		-projectName=$1 -projectBaseDir=. -maximumThreads=10 \
 		-runFB=false -runPMD=false -runAndroidHunter=false -runMetricHunter=false \
 		-runVulnerabilityHunter=false -runFaultHunter=false -runRTEHunter=false \
@@ -86,12 +87,14 @@ if [ ! -f readability.classifier ] ; then
 	# Symbolic link. Needed for Scalabrino's jar. Don't make if it exists
 fi
 
+# Because of parallel running, they would try to write to the same folder, samw timestamp
+SMA_RES_DIR=$(mktemp --tmpdir -d SMAresults.XXX)
+echo "SMA results dir = $SMA_RES_DIR (for $1)"
+
 #-----------------
 #for each commit: (from x eg.50 readability commits, and 2*x random other commits for comparison)
 
 
-
-# SourceMeter needs Java v1.11
 # No need for 2 loops! Since we don't change Java versions with update, just git-checkout once!
 for commit in $(cat "$commits_file"); do
 
@@ -151,6 +154,6 @@ for commit in $(cat "$commits_file"); do
 	
 done
 
-rm -rf /tmp/SMAresults/
+rm -rf "$SMA_RES_DIR"
 rm -rf filesForEval
 
