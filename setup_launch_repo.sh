@@ -5,6 +5,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=4
 #SBATCH --mem=32G
+#SBATCH --exclusive # Necessary to start multiple steps with srun, and run parallel
 #TODO find best slurm options
 
 # maybe these paths & consts should be defined outside, as "env"
@@ -16,15 +17,16 @@ METRICS_DIR="$SCRIPTS_DIR/metrics" # later we add /$repo_name
 readarray -t KEYWORDS < "$SCRIPTS_DIR/keywords_for_commits.txt"
 # -t discards trailing newlines. Important for git log --grep
 
+echo "Curr dir = $(pwd)"
 
 # Store the repo to be analysed in this folder. This can be in RAM (like tmpfs) for faster
 if [ -z "$FILES_DIR" ] ; then
 	rundir_avail=$(df --output=avail "$XDG_RUNTIME_DIR/" | tail -n1)
 	tmpdir_avail=$(df --output=avail /tmp/ | tail -n1)
 	
-	if [ $rundir_avail -gt 1800000 -a -w "$XDG_RUNTIME_DIR/" ] ; then # min 1.8 GB free, and writable
+	if [ $rundir_avail -gt 3000000 -a -w "$XDG_RUNTIME_DIR/" ] ; then # min 3 GB free, and writable
 		FILES_DIR="$XDG_RUNTIME_DIR/readabl_dipl"
-	elif [ $tmpdir_avail -gt 1800000 -a -w /tmp/ ] ; then
+	elif [ $tmpdir_avail -gt 3000000 -a -w /tmp/ ] ; then
 		FILES_DIR=/tmp/readabl_dipl
 	else
 		FILES_DIR="$SCRIPTS_DIR"
