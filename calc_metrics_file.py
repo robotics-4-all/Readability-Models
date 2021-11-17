@@ -75,15 +75,42 @@ tmp = 8.87 - 1.5*metrics['Posnett entropy'] - 0.033*metrics['Posnett volume'] + 
 posnett_score = sigmoid(tmp)
 
 
-tmp = 1 # TODO DORN MODEL
-dorn_score = sigmoid(tmp)
+# TODO DORN MODEL
+
+def dorn_metrics(filename):
+
+	file = open(filename, 'r')
+	long_lines = 0
+
+	for line in file:
+		
+		line_wspaces = re.sub(r'\t', '    ', line) # replace tabs with 4 spaces
+		
+		if (len(line_wspaces) - 1) > 113: # 113 = Q3 + 1.5 * (Q3 - Q1) from Dorn java dataset
+			long_lines += 1
+	
+	long_lines_percent = long_lines / metrics['Posnett lines']
+	# Do we want percent or absolout num of long lines? TODO
+	
+	keywords = metrics['BW Avg keywords'] # this is keywords per line
+	# Or maybe.. TODO
+	keywords = metrics['BW Avg keywords'] * metrics['Posnett lines']
+	
+	lines_per_identifier = 1 / metrics['BW Avg number of identifiers']
+	
+	tmp = -0.0388 * metrics['Dorn DFT Spaces'] - 0.0349 * long_lines_percent - \
+		0.0114 * lines_per_identifier + 0.004 * keywords # + 0.0065 * 'DFT of syntax' ?? + C ? TODO
+		
+	return sigmoid(tmp)
+
+dorn_score = dorn_metrics(filename)
 
 
 ### Source Meter Analyser
 # we dont call SMA here. We read its resulting file.
-# Which file? $METRICS_DIR/curr_sma_result.csv
+# Which file? $METRICS_DIR/curr_sma_class.csv
 try:
-	reader = open(METRICS_DIR + '/curr_sma_result.csv', 'r')
+	reader = open(METRICS_DIR + '/curr_sma_class.csv', 'r')
 	
 	csv_sma = csv.DictReader(reader)
 	
@@ -102,7 +129,7 @@ try:
 	del reader, csv_sma
 	
 except OSError:
-	print('curr_sma_result.csv does not exist', file=sys.stderr)
+	print('curr_sma_class.csv does not exist', file=sys.stderr)
 # If it does not exist because for example SMA could not run),
 # no problem. Those metric will be left empty
 
