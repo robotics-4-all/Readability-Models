@@ -26,26 +26,27 @@ fi
 
 function runSMA () {
 
-	common_path=$(python3 -c \
-		"import sys,os.path; print(os.path.commonpath(sys.argv[1:]))" "${files_changed[@]}")
 	# Doing -projectBaseDir=. makes it extremely slow at step DirectoryBasedAnalysisTask
-	# and it may even run out of ram...
+	# and it may even run out of ram... Copy only needed files to seperate dir
+	mkdir -p filesForEval
+	rm -rf filesForEval/* # remove all old files
 	
-	if [ -z "$common_path" ] ; then # If it's empty, no common subpath
-		common_path="."
-	fi
+	cp --parents -t filesForEval/ "${files_changed[@]}" # keep the dir structure
 	
 	echo -n "Running SourceMeter for $short_hash - $1 ... "
 	
 	# Instead of update-java-alternatives,
 	# This is if we are not root and cannot change java alternatives
 	
+	# Also chdir, so that it only runs for the changed files
+	cd filesForEval # hpc doesn't support env --chdir
 	env PATH="$JAVA11DIR" "$SCRIPTS_DIR/sma-9/SourceMeterJava" -resultsDir=/tmp/SMAresults \
-		-projectName=$1 -projectBaseDir=$common_path \
+		-projectName=$1 -projectBaseDir=. -maximumThreads=10 \
 		-runFB=false -runPMD=false -runAndroidHunter=false -runMetricHunter=false \
 		-runVulnerabilityHunter=false -runFaultHunter=false -runRTEHunter=false \
 		-runDCF=true -runMET=true "${files_changed[@]}" # > /dev/null
 	# We just want it to calc metrics and duplication check: runMET and runDCF
+	cd ..
 	
 	sma_return=$? # The return code would be lost by the echo
 	if [[ $sma_return == 0 ]] ; then
@@ -151,4 +152,5 @@ for commit in $(cat "$commits_file"); do
 done
 
 rm -rf /tmp/SMAresults/
+rm -rf filesForEval
 
