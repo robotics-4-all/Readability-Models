@@ -27,7 +27,8 @@ Scalabr_metrics = ['New Identifiers words AVG', 'New Identifiers words MIN', 'Ne
 'Dorn Visual X Operators', 'Dorn Visual Y Operators', 'Dorn Areas Comments', 'Dorn Areas Identifiers', 'Dorn Areas Keywords', 'Dorn Areas Numbers', 'Dorn Areas Strings', 'Dorn Areas Literals', 'Dorn Areas Operators', 'Dorn Areas Identifiers/Comments', 'Dorn Areas Keywords/Comments', 'Dorn Areas Numbers/Comments', 'Dorn Areas Strings/Comments', 'Dorn Areas Literals/Comments', 'Dorn Areas Operators/Comments',
 'Dorn Areas Keywords/Identifiers', 'Dorn Areas Numbers/Identifiers', 'Dorn Areas Strings/Identifiers', 'Dorn Areas Literals/Identifiers', 'Dorn Areas Operators/Identifiers', 'Dorn Areas Numbers/Keywords', 'Dorn Areas Strings/Keywords', 'Dorn Areas Literals/Keywords', 'Dorn Areas Operators/Keywords', 'Dorn Areas Strings/Numbers', 'Dorn Areas Literals/Numbers', 'Dorn Areas Operators/Numbers', 'Dorn Areas Literals/Strings', 'Dorn Areas Operators/Strings', 'Dorn Areas Operators/Literals', 'Dorn align blocks', 'Dorn align extent']
 
-CSV_FIELDS = ['filename', 'bw_score', 'posnett_score', 'dorn_score', 'scalabrino_score'] + Scalabr_metrics + SMA_metrics
+CSV_FIELDS = ['filename', 'bw_score', 'posnett_score', 'dorn_score', 'scalabrino_score', \
+	'issel_readab', 'issel_r_cmplx', 'issel_r_cpl', 'issel_r_doc'] + Scalabr_metrics + SMA_metrics
 
 
 if len(sys.argv) < 2 :
@@ -167,6 +168,33 @@ try:
 except OSError:
 	print('scalabrino_tmp.txt does not exist', file=sys.stderr)
 	scalabrino_score = -1
+
+### Issel model
+
+def issel_model():
+
+	if not os.path.isfile(METRICS_DIR + '/curr_sma_methd.csv'):
+		print("curr_sma_methd.csv does not exist", file=sys.stderr)
+		return
+	
+	methods_sma = pd.read_csv(METRICS_DIR + '/curr_sma_methd.csv')
+	
+	df_methods_readabil = prediction_per_cluster(methods_sma)
+	# should contain at least [filename, LOC, readab, r_cmplx, r_cpl, r_doc]
+	
+	# Aggregate, from methods -> Files. Group by filename (Path), and take mean
+	simple_avg = df_methods_readabil.drop(columns='LOC').groupby('Path').agg('mean')
+	
+	# Weighted avg with LOC per method
+	df_methods_readabil[['readab', 'r_cmplx', 'r_cpl', 'r_doc']] *= df_methods_readabil.LOC # TODO the * doesn work
+	weighted_avg = df_methods_readabil.groupby('Path').agg('sum')
+	weighted_avg[['readab', 'r_cmplx', 'r_cpl', 'r_doc']] /= weighted_avg.LOC
+	weighted_avg = weighted_avg.drop(columns='LOC')
+	
+	#for attr in ['readab', 'r_cmplx', 'r_cpl', 'r_doc']:
+	#	metrics['issel_'+attr] = weighted_avg.loc[filename][attr]
+	#weighted_avg.columns = ['issel_'+colname for colname in weighted_avg.columns]
+	return simple_avg
 
 
 ### Final stuff. Append to csv

@@ -40,7 +40,7 @@ if [ ! -d "$FILES_DIR" ] ; then
 	mkdir -p "$FILES_DIR"
 fi
 
-module load gcc/9.2 python/3.8 # for hpc
+module load gcc/9.2 python/3.7 # for hpc
 
 
 # Handler for sigint, sigterm. To kill any children.
