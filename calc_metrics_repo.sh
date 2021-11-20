@@ -59,7 +59,7 @@ function runSMA () {
 }
 
 
-function loop_files_calc_metr () {
+function files_calc_metr () {
 
 	# use the result of SourceMeter for (before/after) this commit
 	cp "$METRICS_DIR/${short_hash}_smaCl_${1}.csv" "$METRICS_DIR/curr_sma_class.csv"
@@ -73,12 +73,9 @@ function loop_files_calc_metr () {
 	# The jar needs readability.classifier in the current path (pwd). Is symlinked in calc_metrics_repo.sh
 	# The output file will not stay, it will be written over, no problem. It is used just below.
 	
-	for file in "${files_changed[@]}" ; do
-		# Calculate various metrics for file before/after commit. Store results
-		
-		python3 "$SCRIPTS_DIR/calc_metrics_file.py" $file >> "$METRICS_DIR/${short_hash}_${1}.csv"
-		# one line per file. Filename can be the first field
-	done
+	# Calculate various metrics for file before/after commit. Store results
+	python3 "$SCRIPTS_DIR/calc_metrics_file.py" "${files_changed[@]}" > "$METRICS_DIR/${short_hash}_${1}.csv"
+	# one line per file. Filename is the first field, column names in the first row
 }
 
 
@@ -123,10 +120,6 @@ for commit in $(cat "$commits_file"); do
 		continue
 	fi
 	
-	# setup CSV files and their headers
-	python3 "$SCRIPTS_DIR/calc_metrics_file.py" --setup > "$METRICS_DIR/${short_hash}_after.csv"
-	cp "$METRICS_DIR/${short_hash}_after.csv" "$METRICS_DIR/${short_hash}_befor.csv"
-	
 	
 	runSMA after # run SourceMeter with minimal options
 	# Since they depend on the changed files, they should probably NOT run in parallel
@@ -137,7 +130,7 @@ for commit in $(cat "$commits_file"); do
 	mv $SMA_RES_DIR/after/java/*/after-Class.csv "$METRICS_DIR/${short_hash}_smaCl_after.csv"
 	mv $SMA_RES_DIR/after/java/*/after-Method.csv "$METRICS_DIR/${short_hash}_smaMe_after.csv"
 	
-	loop_files_calc_metr after
+	files_calc_metr after
 	
 	#--------------------
 	git checkout -f HEAD^ # Go to before commit
@@ -150,7 +143,7 @@ for commit in $(cat "$commits_file"); do
 		mv $SMA_RES_DIR/befor/java/*/befor-Method.csv "$METRICS_DIR/${short_hash}_smaMe_befor.csv"
 	fi
 	
-	loop_files_calc_metr befor
+	files_calc_metr befor
 	
 done
 

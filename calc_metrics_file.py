@@ -2,7 +2,8 @@
 
 import re, subprocess, sys, os, csv
 from math import exp, fsum, inf
-
+import numpy as np
+import pandas as pd
 
 try:
 	SCRIPTS_DIR = os.environ['SCRIPTS_DIR']
@@ -11,7 +12,7 @@ except KeyError:
 try:
 	METRICS_DIR = os.environ['METRICS_DIR']
 except KeyError:
-	METRICS_DIR = SCRIPTS_DIR + '/metrics' #TODO maybe current dir /metrics
+	METRICS_DIR = SCRIPTS_DIR + '/metrics'
 RSMJAR = SCRIPTS_DIR + '/models/rsm.jar'
 
 SMA_metrics = ['CC', 'CCL', 'CCO', 'CI', 'CLC', 'CLLC', 'LDC', 'LLDC', 'LCOM5', 'NL', 'NLE', 'WMC', 'CBO', 'CBOI', 'NII',
@@ -32,145 +33,156 @@ CSV_FIELDS = ['filename', 'bw_score', 'posnett_score', 'dorn_score', 'scalabrino
 
 
 if len(sys.argv) < 2 :
-	print("Needs one argument. Usage: calc_metrics_file.py filename | --setup", file=sys.stderr)
-	sys.exit(1)
-
-if sys.argv[1] == "--setup" :
-	csv_writer = csv.DictWriter(sys.stdout, fieldnames=CSV_FIELDS)
-	csv_writer.writeheader()
-	sys.exit(0)
-
-
-filename = sys.argv[1]
-if not os.path.isfile(filename):
-	print("Error. File does not exist", file=sys.stderr)
+	print("Needs >=1 argument. Usage: calc_metrics_file.py filename...", file=sys.stderr)
 	sys.exit(1)
 
 
-### Many metrics, Posnett, and Dorn
-
-raw = subprocess.check_output(['java', '-cp', RSMJAR,
-	'it.unimol.readability.metric.runnable.ExtractMetrics', filename],
-	stderr=subprocess.DEVNULL, encoding="utf-8") # stderr > /dev/null
-
-#comma_metrics = re.sub(r"^.+: (.{3,})\n", "\\1,", raw, 0, re.MULTILINE)
-
-regex_res = re.findall(r"^(.+): (.{3,})$", raw, re.MULTILINE)
-# The above is a list of tuples with strings. Make it a dict with floats
-metrics = {'filename' : filename}
-for line in regex_res: # line is a tuple [metric_name, value]
-	metrics[line[0]] = float(line[1])
+filenames = sys.argv[1:]
 
 
-if len(metrics) != 111: # 1 was the filename
-	print("Warning! There were not 110 metrics")
+### Scalabrino many metrics, Posnett, and Dorn
+def many_metrics_rms(filename):
+
+	raw = subprocess.check_output(['java', '-cp', RSMJAR,
+		'it.unimol.readability.metric.runnable.ExtractMetrics', filename],
+		stderr=subprocess.DEVNULL, encoding="utf-8") # stderr > /dev/null
+
+	#comma_metrics = re.sub(r"^.+: (.{3,})\n", "\\1,", raw, 0, re.MULTILINE)
+
+	regex_res = re.findall(r"^(.+): (.{3,})$", raw, re.MULTILINE)
+	# The above is a list of tuples with strings. Make it a dict (for now with strings)
+	
+	file_metrics = dict(regex_res) # the values are still strings
+	file_metrics['filename'] = filename
+	
+	if len(file_metrics) != 111: # 1 was the filename
+		print("Warning! There were not 110 metrics from" + filename, file=sys.stderr)
+	
+	return file_metrics
+
+
+def setup_df_many():
+	
+	list_of_dicts = []
+	
+	for filename in filenames:
+	
+		if not os.path.isfile(filename):
+			print("Error. File {} does not exist".format(filename), file=sys.stderr)
+			sys.exit(1)
+		
+		file_metrics = many_metrics_rms(filename)
+		list_of_dicts.append(file_metrics)
+	
+	metrics = pd.DataFrame(list_of_dicts).set_index('filename')
+	
+	return metrics.astype(float).convert_dtypes()
+	# Convert all strings to floats. Then, when possible, convert floats to ints
 
 
 def sigmoid(x):
-	if -x > 700:
+	
+	if np.ndim(x) > 0:
+		x[-x > 700] = -inf
+	elif -x > 700:
 		x = -inf # To prevent overflow error in exp()
-	return 1/(1 + exp(-x))
+	
+	return 1/(1 + np.exp(-x))
+
 
 # POSNETT
-tmp = 8.87 - 1.5*metrics['Posnett entropy'] - 0.033*metrics['Posnett volume'] + 0.4*metrics['Posnett lines']
-posnett_score = sigmoid(tmp)
+def posnett(metrics):
+	tmp = 8.87 - 1.5*metrics['Posnett entropy'] - \
+		0.033*metrics['Posnett volume'] + 0.4*metrics['Posnett lines']
+	return sigmoid(tmp)
 
 
 # TODO DORN MODEL
 
-def dorn_metrics(filename):
+def dorn_metrics(metrics):
 
-	file = open(filename, 'r')
-	long_lines = 0
-
-	for line in file:
-		
-		line_wspaces = re.sub(r'\t', '    ', line) # replace tabs with 4 spaces
-		
-		if (len(line_wspaces) - 1) > 113: # 113 = Q3 + 1.5 * (Q3 - Q1) from Dorn java dataset
-			long_lines += 1
+	metrics['Dorn long lines'] = np.zeros(len(metrics))
 	
-	long_lines_percent = long_lines / metrics['Posnett lines']
-	# Do we want percent or absolout num of long lines? TODO
+	for filename in metrics.index: # the index column is the filename
+		
+		try:
+			file = open(filename, 'r')
+			for line in file:
+				
+				line_wspaces = re.sub(r'\t', '    ', line) # replace tabs with 4 spaces
+				
+				if (len(line_wspaces)-1) > 113: # 113 = Q3 + 1.5 * (Q3 - Q1) from Dorn java dataset
+					metrics['Dorn long lines'][filename] += 1
+		except:
+			metrics['Dorn long lines'][filename] = None
+		finally:
+			file.close()
+	
+	metrics['Dorn long lines'] /= metrics['Posnett lines'].values # element-wise division. To get percent
+	# Do we want percent or absolute num of long lines? TODO
 	
 	keywords = metrics['BW Avg keywords'] # this is keywords per line
 	# Or maybe.. TODO
-	keywords = metrics['BW Avg keywords'] * metrics['Posnett lines']
+	#keywords = metrics['BW Avg keywords'] * metrics['Posnett lines']
 	
 	lines_per_identifier = 1 / metrics['BW Avg number of identifiers']
 	
-	tmp = -0.0388 * metrics['Dorn DFT Spaces'] - 0.0349 * long_lines_percent - \
+	tmp = -0.0388 * metrics['Dorn DFT Spaces'] - 0.0349 * metrics['Dorn long lines'] - \
 		0.0114 * lines_per_identifier + 0.004 * keywords # + 0.0065 * 'DFT of syntax' ?? + C ? TODO
 		
 	return sigmoid(tmp)
-
-dorn_score = dorn_metrics(filename)
 
 
 ### Source Meter Analyser
 # we dont call SMA here. We read its resulting file.
 # Which file? $METRICS_DIR/curr_sma_class.csv
-try:
-	reader = open(METRICS_DIR + '/curr_sma_class.csv', 'r')
+def sma_parse():
 	
-	csv_sma = csv.DictReader(reader)
+	if not os.path.isfile(METRICS_DIR + '/curr_sma_class.csv'):
+		print("curr_sma_class.csv does not exist", file=sys.stderr)
+		return
 	
-	for row in csv_sma:
-		if row['Path'].endswith(filename) and not ('$' in row['Name']):
-			# We want the 'main' (not secondary) class of each file
-			# The one that doesn't contain $ like UpdateHelper$Result
-			
-			# add row[...] to metrics
-			for m in SMA_metrics:
-				metrics[m] = row[m]
-			
-			break # Stop the search for the main class of the file
+	class_sma = pd.read_csv(METRICS_DIR + '/curr_sma_class.csv')
 	
-	reader.close()
-	del reader, csv_sma
+	# We want the 'main' (not secondary) class of each file
+	# The one that doesn't contain $ like UpdateHelper$Result
+	secondary_classes = class_sma['Name'].str.contains('\$') # This is a bool array
+	class_sma = class_sma.drop(class_sma.index[secondary_classes])
 	
-except OSError:
-	print('curr_sma_class.csv does not exist', file=sys.stderr)
+	return class_sma.set_index('Path', verify_integrity=True)
+
 # If it does not exist because for example SMA could not run),
 # no problem. Those metric will be left empty
 
 
 ### Buse Weimer
 
-command = "sed '0~8 s/$/\\n###/g' '{0}' | java -jar {1}/models/BW_readability.jar".format(filename, SCRIPTS_DIR)
-raw = subprocess.check_output(command, shell=True, encoding="utf-8")
+def buse_weimer(filename):
+	command = "sed '0~8 s/$/\\n###/g' '{0}' | java -jar '{1}/models/BW_readability.jar'".format(filename, SCRIPTS_DIR)
+	raw = subprocess.check_output(command, shell=True, encoding="utf-8")
 
-snippet_scores_str = raw.split('\n\n')[1:-1]
+	snippet_scores_str = raw.split('\n\n')[1:-1]
 
-# First, make them all floats. then add them and divide by the count
-# to get the average BW score of all the snippets
-bw_score = fsum(map(float, snippet_scores_str)) / len(snippet_scores_str)
+	# First, make them all floats. then add them and divide by the count
+	# to get the average BW score of all the snippets
+	return fsum(map(float, snippet_scores_str)) / len(snippet_scores_str)
 
 
 
 ### Scalabrino
-try:
-	file = open("scalabrino_tmp.txt","r")
-	for line in file:
+def scalabrino():
 
-		if line.split('\t')[0] == filename:
+	if not os.path.isfile('scalabrino_tmp.txt'):
+		print("Error. scalabrino_tmp.txt does not exist", file=sys.stderr)
+		return
+	
+	scal_df = pd.read_csv('scalabrino_tmp.txt', sep='\t', \
+		index_col=0, names=['filename', 'scalabrino_score'])
+		
+	return scal_df
 
-			scalabrino_score = float( line.split('\t')[-1] )
-			# Gets the part after the last tab, and converts to float
-			
-			break
-	else: # If it was not found
-		scalabrino_score = -1
-	
-	file.close()
-	del file
-	
-except OSError:
-	print('scalabrino_tmp.txt does not exist', file=sys.stderr)
-	scalabrino_score = -1
 
 ### Issel model
-
 def issel_model():
 
 	if not os.path.isfile(METRICS_DIR + '/curr_sma_methd.csv'):
@@ -186,25 +198,51 @@ def issel_model():
 	simple_avg = df_methods_readabil.drop(columns='LOC').groupby('Path').agg('mean')
 	
 	# Weighted avg with LOC per method
-	df_methods_readabil[['readab', 'r_cmplx', 'r_cpl', 'r_doc']] *= df_methods_readabil.LOC # TODO the * doesn work
-	weighted_avg = df_methods_readabil.groupby('Path').agg('sum')
-	weighted_avg[['readab', 'r_cmplx', 'r_cpl', 'r_doc']] /= weighted_avg.LOC
-	weighted_avg = weighted_avg.drop(columns='LOC')
+	for col in ['readab', 'r_cmplx', 'r_cpl', 'r_doc']:
+		df_methods_readabil[col] *= df_methods_readabil.LOC.values
 	
-	#for attr in ['readab', 'r_cmplx', 'r_cpl', 'r_doc']:
-	#	metrics['issel_'+attr] = weighted_avg.loc[filename][attr]
-	#weighted_avg.columns = ['issel_'+colname for colname in weighted_avg.columns]
-	return simple_avg
+	weighted_avg = df_methods_readabil.groupby('Path').agg('sum')
+	
+	for col in ['readab', 'r_cmplx', 'r_cpl', 'r_doc']:
+		weighted_avg[col] /= weighted_avg.LOC.values
+	
+	return weighted_avg.drop(columns='LOC')
+	
+	#return simple_avg
 
 
-### Final stuff. Append to csv
+### Main function
+def main():
+	
+	metrics = setup_df_many() # metrics from Scalabrino jar
+	
+	bw_list = []
+	for filename in filenames:
+		try:
+			bw_score = buse_weimer(filename)
+		except:
+			bw_score = None
+		bw_list.append(bw_score)
+	bw_score = pd.Series(bw_list, index=filenames, dtype=float)
+	
+	posnett_score = posnett(metrics)
+	dorn_score = dorn_metrics(metrics)
+	scalabrino_score = scalabrino()
+	
+	issel_metrics = issel_model().add_prefix('issel_') # adds prefix to column names
+	metrics = metrics.join(issel_metrics)
+	
+	sma_by_class = sma_parse()
+	metrics = metrics.join(sma_by_class)
+	
+	metrics['bw_score'] = bw_score
+	metrics['posnett_score'] = posnett_score
+	metrics['dorn_score'] = dorn_score
+	metrics['scalabrino_score'] = scalabrino_score
+	
+	
+	# Write csv to STDOUT. Will be redirected to a file named by the commit
+	metrics.to_csv(sys.stdout, columns=CSV_FIELDS)
 
-metrics['bw_score'] = bw_score
-metrics['posnett_score'] = posnett_score
-metrics['dorn_score'] = dorn_score
-metrics['scalabrino_score'] = scalabrino_score
-
-# Use a csv.DictWriter and write to STDOUT. Will be redirected to a file named by the commit
-csv_writer = csv.DictWriter(sys.stdout, fieldnames=CSV_FIELDS)
-csv_writer.writerow(metrics)
+main()
 
