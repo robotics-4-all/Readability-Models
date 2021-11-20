@@ -150,7 +150,7 @@ if [ $commits_per_node -lt 5 ] ; then # Don't use <. This compares lexicographic
 	commits_per_node=$(( num_readab_commits + num_nonread_commits ))
 fi
 
-cat readability_commits_unique.txt nonread_commits.txt |
+cat readability_commits_unique.txt nonread_commits.txt | cut -c1-10 | # just keep 10 chars of the hash
 	split --numeric-suffixes=1 --suffix-length=2 --number=r/$parallel - commits
 # split to $parallel files commits01, commits02... "commits" is the prefix
 # "r/" = do not break lines and use round-robin. "-" is to read from stdin

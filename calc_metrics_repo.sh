@@ -35,7 +35,7 @@ function runSMA () {
 	
 	#rm -rf "$SMA_RES_DIR/$1" # No need, because we mv Class.csv and Method.csv, so they won;t exist
 	
-	echo -n "Running SourceMeter for $short_hash - $1 ... "
+	echo -n "Running SourceMeter for $commit - $1 ... "
 	
 	# SourceMeter needs Java v1.11
 	# Instead of update-java-alternatives, we set the PATH for java v11 (because we are not root)
@@ -62,8 +62,8 @@ function runSMA () {
 function files_calc_metr () {
 
 	# use the result of SourceMeter for (before/after) this commit
-	cp "$METRICS_DIR/${short_hash}_smaCl_${1}.csv" "$METRICS_DIR/curr_sma_class.csv"
-	cp "$METRICS_DIR/${short_hash}_smaMe_${1}.csv" "$METRICS_DIR/curr_sma_methd.csv"
+	cp "$METRICS_DIR/${commit}_smaCl_${1}.csv" "$METRICS_DIR/curr_sma_class.csv"
+	cp "$METRICS_DIR/${commit}_smaMe_${1}.csv" "$METRICS_DIR/curr_sma_methd.csv"
 	
 	# Run Scalabrino once for all files: faster.
 	# 10 calls of 1 files : 21 seconds. 1 call of 10 files : 3 seconds. 7x speedup
@@ -74,7 +74,7 @@ function files_calc_metr () {
 	# The output file will not stay, it will be written over, no problem. It is used just below.
 	
 	# Calculate various metrics for file before/after commit. Store results
-	python3 "$SCRIPTS_DIR/calc_metrics_file.py" "${files_changed[@]}" > "$METRICS_DIR/${short_hash}_${1}.csv"
+	python3 "$SCRIPTS_DIR/calc_metrics_file.py" "${files_changed[@]}" > "$METRICS_DIR/${commit}_${1}.csv"
 	# one line per file. Filename is the first field, column names in the first row
 }
 
@@ -94,29 +94,27 @@ echo "SMA results dir = $SMA_RES_DIR (for $1)"
 
 # No need for 2 loops! Since we don't change Java versions with update, just git-checkout once!
 for commit in $(cat "$commits_file"); do
-
-	short_hash=$(echo $commit | cut -c1-10)
 	
 	git checkout -f $commit # -f = force, overwrite files. TODO maybe do --no-overlay. Also check if there is option to hide detached head msg
 	
 	# find list of files changed and num of lines changed
 	git diff --numstat --diff-filter=M HEAD^ | cut -f3 |
-		grep '\.java$' > "$METRICS_DIR/${short_hash}_files.txt"
+		grep '\.java$' > "$METRICS_DIR/${commit}_files.txt"
 	
 	# We only want files which exist before and after the commit. So no added/deleted.
 	# The option --diff-filter=M keeps only modified files.
 	# The 3rd column has the filenames. Only include .java files
 	
-	readarray -t files_changed < "$METRICS_DIR/${short_hash}_files.txt"
+	readarray -t files_changed < "$METRICS_DIR/${commit}_files.txt"
 	# use a bash indexed array, so that we can send each file as exactly one argument to java, python, etc
 	
 	num_files="${#files_changed[@]}"
 	if [ $num_files -eq 0 ] ; then # If no files changed, don't run anything
-		echo "Commit $short_hash has no files to check"
+		echo "Commit $commit has no files to check"
 		continue
 	fi
 	if [ $num_files -gt 80 ] ; then # Way too many. Could be irrelevant. Will be slow. Skip
-		echo "Commit $short_hash has too many files to check ($num_files)"
+		echo "Commit $commit has too many files to check ($num_files)"
 		continue
 	fi
 	
@@ -127,8 +125,8 @@ for commit in $(cat "$commits_file"); do
 	sma_returncode=$?
 	
 	# keep only -Class.csv. * is for the timestamp
-	mv $SMA_RES_DIR/after/java/*/after-Class.csv "$METRICS_DIR/${short_hash}_smaCl_after.csv"
-	mv $SMA_RES_DIR/after/java/*/after-Method.csv "$METRICS_DIR/${short_hash}_smaMe_after.csv"
+	mv $SMA_RES_DIR/after/java/*/after-Class.csv "$METRICS_DIR/${commit}_smaCl_after.csv"
+	mv $SMA_RES_DIR/after/java/*/after-Method.csv "$METRICS_DIR/${commit}_smaMe_after.csv"
 	
 	files_calc_metr after
 	
@@ -139,8 +137,8 @@ for commit in $(cat "$commits_file"); do
 	if [[ $sma_returncode == 0 ]] ; then # Only run SMA for befor if the previous run was successful (0)
 		runSMA befor
 		
-		mv $SMA_RES_DIR/befor/java/*/befor-Class.csv "$METRICS_DIR/${short_hash}_smaCl_befor.csv"
-		mv $SMA_RES_DIR/befor/java/*/befor-Method.csv "$METRICS_DIR/${short_hash}_smaMe_befor.csv"
+		mv $SMA_RES_DIR/befor/java/*/befor-Class.csv "$METRICS_DIR/${commit}_smaCl_befor.csv"
+		mv $SMA_RES_DIR/befor/java/*/befor-Method.csv "$METRICS_DIR/${commit}_smaMe_befor.csv"
 	fi
 	
 	files_calc_metr befor
