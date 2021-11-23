@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 
-import re, subprocess, sys, os, csv
-from math import exp, fsum, inf
+import re, subprocess, sys, os
+from math import fsum, inf
 import numpy as np
 import pandas as pd
+from models.issel import aggregation_functions as issel
 
 try:
 	SCRIPTS_DIR = os.environ['SCRIPTS_DIR']
@@ -191,7 +192,7 @@ def issel_model():
 	
 	methods_sma = pd.read_csv(METRICS_DIR + '/curr_sma_methd.csv')
 	
-	df_methods_readabil = prediction_per_cluster(methods_sma)
+	df_methods_readabil = issel.prediction_per_cluster(methods_sma)
 	# should contain at least [filename, LOC, readab, r_cmplx, r_cpl, r_doc]
 	
 	# Aggregate, from methods -> Files. Group by filename (Path), and take mean
@@ -244,5 +245,6 @@ def main():
 	# Write csv to STDOUT. Will be redirected to a file named by the commit
 	metrics.to_csv(sys.stdout, columns=CSV_FIELDS)
 
-main()
+if __name__ == '__main__':
+	main()
 

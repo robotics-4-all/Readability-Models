@@ -1,6 +1,13 @@
-import joblib
+import joblib, os
 import numpy as np
 import pandas as pd
+
+try:
+	SCRIPTS_DIR = os.environ['SCRIPTS_DIR']
+except KeyError:
+	SCRIPTS_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+ISSEL_DIR = SCRIPTS_DIR + '/models/issel/'
+
 
 def aggregation(complexity, coupling, documentation):
 
@@ -28,9 +35,9 @@ def normalize_values(pred_test, offset=0):
 
 def prediction(cluster, df):
 
-    cmplx_model = joblib.load("SVR_" + cluster + "_complexity.pkz")
-    cpl_model = joblib.load("SVR_" + cluster + "_coupling.pkz")
-    doc_model = joblib.load("SVR_" + cluster + "_documentation.pkz")
+    cmplx_model=joblib.load(ISSEL_DIR + "SVR_" + cluster + "_complexity.pkz")
+    cpl_model = joblib.load(ISSEL_DIR + "SVR_" + cluster + "_coupling.pkz")
+    doc_model = joblib.load(ISSEL_DIR + "SVR_" + cluster + "_documentation.pkz")
 
     #target = df["Readability"]
     Xtest = df # df.drop(["Readability"], axis=1)
