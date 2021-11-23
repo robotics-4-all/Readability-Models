@@ -46,6 +46,8 @@ def prediction(cluster, df):
     cpl_cols = Xtest[["NII", "NOI"]] # Coupling metrics
     doc_cols = Xtest[["CD", "DLOC", "CLOC"]] # Documentation metrics
 
+    # TODO maybe remove the column names, because the model complains
+    # that it was trained without them. "SVR was fitted without feature names"
     pred_cmplx = cmplx_model.predict(cmplx_cols)
     pred_cpl = cpl_model.predict(cpl_cols)
     pred_doc = doc_model.predict(doc_cols)

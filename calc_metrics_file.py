@@ -136,14 +136,14 @@ def dorn_metrics(metrics):
 
 ### Source Meter Analyser
 # we dont call SMA here. We read its resulting file.
-# Which file? $METRICS_DIR/curr_sma_class.csv
+# Which file? ./curr_sma_class.csv
 def sma_parse():
 	
-	if not os.path.isfile(METRICS_DIR + '/curr_sma_class.csv'):
+	if not os.path.isfile('curr_sma_class.csv'):
 		print("curr_sma_class.csv does not exist", file=sys.stderr)
 		return
 	
-	class_sma = pd.read_csv(METRICS_DIR + '/curr_sma_class.csv')
+	class_sma = pd.read_csv('curr_sma_class.csv')
 	
 	# We want the 'main' (not secondary) class of each file
 	# The one that doesn't contain $ like UpdateHelper$Result
@@ -186,11 +186,11 @@ def scalabrino():
 ### Issel model
 def issel_model():
 
-	if not os.path.isfile(METRICS_DIR + '/curr_sma_methd.csv'):
+	if not os.path.isfile('curr_sma_methd.csv'):
 		print("curr_sma_methd.csv does not exist", file=sys.stderr)
 		return
 	
-	methods_sma = pd.read_csv(METRICS_DIR + '/curr_sma_methd.csv')
+	methods_sma = pd.read_csv('curr_sma_methd.csv')
 	
 	df_methods_readabil = issel.prediction_per_cluster(methods_sma)
 	# should contain at least [filename, LOC, readab, r_cmplx, r_cpl, r_doc]

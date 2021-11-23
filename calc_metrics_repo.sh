@@ -45,7 +45,7 @@ function runSMA () {
 		-projectName=$1 -projectBaseDir=. -maximumThreads=10 \
 		-runFB=false -runPMD=false -runAndroidHunter=false -runMetricHunter=false \
 		-runVulnerabilityHunter=false -runFaultHunter=false -runRTEHunter=false \
-		-runDCF=true -runMET=true "${files_changed[@]}" # > /dev/null
+		-runDCF=true -runMET=true "${files_changed[@]}" > /dev/null
 	# We just want it to calc metrics and duplication check: runMET and runDCF
 	cd ..
 	
@@ -62,8 +62,10 @@ function runSMA () {
 function files_calc_metr () {
 
 	# use the result of SourceMeter for (before/after) this commit
-	cp "$METRICS_DIR/${commit}_smaCl_${1}.csv" "$METRICS_DIR/curr_sma_class.csv"
-	cp "$METRICS_DIR/${commit}_smaMe_${1}.csv" "$METRICS_DIR/curr_sma_methd.csv"
+	cp "$METRICS_DIR/${commit}_smaCl_${1}.csv" curr_sma_class.csv
+	cp "$METRICS_DIR/${commit}_smaMe_${1}.csv" curr_sma_methd.csv
+	# Do not copy in METRICS_DIR, because it would make conflicts with same name.
+	# Copy it in the current dir. Alternative: don't copy, pass filename as env variable
 	
 	# Run Scalabrino once for all files: faster.
 	# 10 calls of 1 files : 21 seconds. 1 call of 10 files : 3 seconds. 7x speedup
