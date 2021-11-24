@@ -132,8 +132,9 @@ def dorn_metrics(metrics):
 	lines_per_identifier = 1 / metrics['BW Avg number of identifiers']
 	
 	tmp = -0.0388 * metrics['Dorn DFT Spaces'] - 0.0349 * metrics['Dorn long lines'] - \
-		0.0114 * lines_per_identifier + 0.004 * keywords # + 0.0065 * 'DFT of syntax' ?? + C ? TODO
-		
+		0.0114 * lines_per_identifier + 0.004 * keywords + 1.4 # + 0.0065 * 'DFT of syntax' ? TODO
+	# Best value for the constant is found to be 1.4 from Dorn's snippets and scores
+	
 	tmp.name = 'dorn_score'
 	return sigmoid(tmp)
 
