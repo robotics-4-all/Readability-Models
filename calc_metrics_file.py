@@ -29,6 +29,7 @@ Scalabr_metrics = ['New Identifiers words AVG', 'New Identifiers words MIN', 'Ne
 'Dorn Visual X Operators', 'Dorn Visual Y Operators', 'Dorn Areas Comments', 'Dorn Areas Identifiers', 'Dorn Areas Keywords', 'Dorn Areas Numbers', 'Dorn Areas Strings', 'Dorn Areas Literals', 'Dorn Areas Operators', 'Dorn Areas Identifiers/Comments', 'Dorn Areas Keywords/Comments', 'Dorn Areas Numbers/Comments', 'Dorn Areas Strings/Comments', 'Dorn Areas Literals/Comments', 'Dorn Areas Operators/Comments',
 'Dorn Areas Keywords/Identifiers', 'Dorn Areas Numbers/Identifiers', 'Dorn Areas Strings/Identifiers', 'Dorn Areas Literals/Identifiers', 'Dorn Areas Operators/Identifiers', 'Dorn Areas Numbers/Keywords', 'Dorn Areas Strings/Keywords', 'Dorn Areas Literals/Keywords', 'Dorn Areas Operators/Keywords', 'Dorn Areas Strings/Numbers', 'Dorn Areas Literals/Numbers', 'Dorn Areas Operators/Numbers', 'Dorn Areas Literals/Strings', 'Dorn Areas Operators/Strings', 'Dorn Areas Operators/Literals', 'Dorn align blocks', 'Dorn align extent']
 
+# TODO maybe we don't need all these
 CSV_FIELDS = ['filename', 'bw_score', 'posnett_score', 'dorn_score', 'scalabrino_score', \
 	'issel_readab', 'issel_r_cmplx', 'issel_r_cpl', 'issel_r_doc'] + Scalabr_metrics + SMA_metrics
 
@@ -95,6 +96,8 @@ def sigmoid(x):
 def posnett(metrics):
 	tmp = 8.87 - 1.5*metrics['Posnett entropy'] - \
 		0.033*metrics['Posnett volume'] + 0.4*metrics['Posnett lines']
+	
+	tmp.name = 'posnett_score'
 	return sigmoid(tmp)
 
 
@@ -131,8 +134,25 @@ def dorn_metrics(metrics):
 	tmp = -0.0388 * metrics['Dorn DFT Spaces'] - 0.0349 * metrics['Dorn long lines'] - \
 		0.0114 * lines_per_identifier + 0.004 * keywords # + 0.0065 * 'DFT of syntax' ?? + C ? TODO
 		
+	tmp.name = 'dorn_score'
 	return sigmoid(tmp)
 
+
+def makeFilepathRelative(df):
+	
+	curr_dir = os.getcwd() + '/'
+	nskip = len(curr_dir)
+	new_index = []
+	
+	for idxEl in df.index:
+		if idxEl.startswith(curr_dir):
+			new_index.append(idxEl[nskip:]) # skip the first chars
+		else:
+			new_index.append(idxEl)
+			print("warning: dataframe idex does not start with curr_dir", file=sys.stderr)
+	df.index = new_index
+	return df
+	
 
 ### Source Meter Analyser
 # we dont call SMA here. We read its resulting file.
@@ -150,7 +170,7 @@ def sma_parse():
 	secondary_classes = class_sma['Name'].str.contains('\$') # This is a bool array
 	class_sma = class_sma.drop(class_sma.index[secondary_classes])
 	
-	return class_sma.set_index('Path', verify_integrity=True)
+	return makeFilepathRelative(class_sma.set_index('Path', verify_integrity=True))
 
 # If it does not exist because for example SMA could not run),
 # no problem. Those metric will be left empty
@@ -196,7 +216,7 @@ def issel_model():
 	# should contain at least [filename, LOC, readab, r_cmplx, r_cpl, r_doc]
 	
 	# Aggregate, from methods -> Files. Group by filename (Path), and take mean
-	simple_avg = df_methods_readabil.drop(columns='LOC').groupby('Path').agg('mean')
+	#simple_avg = df_methods_readabil.drop(columns='LOC').groupby('Path').agg('mean')
 	
 	# Weighted avg with LOC per method
 	for col in ['readab', 'r_cmplx', 'r_cpl', 'r_doc']:
@@ -207,7 +227,8 @@ def issel_model():
 	for col in ['readab', 'r_cmplx', 'r_cpl', 'r_doc']:
 		weighted_avg[col] /= weighted_avg.LOC.values
 	
-	return weighted_avg.drop(columns='LOC')
+	weighted_avg = weighted_avg.drop(columns='LOC').add_prefix('issel_') # adds prefix to column names
+	return makeFilepathRelative(weighted_avg);
 	
 	#return simple_avg
 
@@ -224,26 +245,30 @@ def main():
 		except:
 			bw_score = None
 		bw_list.append(bw_score)
-	bw_score = pd.Series(bw_list, index=filenames, dtype=float)
+	bw_score = pd.Series(bw_list, index=filenames, dtype=float, name='bw_score')
 	
 	posnett_score = posnett(metrics)
 	dorn_score = dorn_metrics(metrics)
 	scalabrino_score = scalabrino()
 	
-	issel_metrics = issel_model().add_prefix('issel_') # adds prefix to column names
-	metrics = metrics.join(issel_metrics)
+	issel_metrics = issel_model()
+	if isinstance(issel_metrics, pd.DataFrame): # if not null
+		metrics = metrics.join(issel_metrics)
 	
 	sma_by_class = sma_parse()
-	metrics = metrics.join(sma_by_class)
+	if isinstance(sma_by_class, pd.DataFrame): # if not null
+		metrics = metrics.join(sma_by_class)
 	
-	metrics['bw_score'] = bw_score
-	metrics['posnett_score'] = posnett_score
-	metrics['dorn_score'] = dorn_score
-	metrics['scalabrino_score'] = scalabrino_score
 	
+	metrics = pd.concat([metrics, bw_score, posnett_score, dorn_score, scalabrino_score], axis=1)
+	# The columns names are set in the functions
+	
+	metrics.index.name = 'filename'
 	
 	# Write csv to STDOUT. Will be redirected to a file named by the commit
-	metrics.to_csv(sys.stdout, columns=CSV_FIELDS)
+	metrics.to_csv(sys.stdout)
+	#TODO here KeyError: "['filename'] not in index
+	# Maybe remove the columns=CSV_FIELDS
 
 if __name__ == '__main__':
 	main()
