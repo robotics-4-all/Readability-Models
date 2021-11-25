@@ -131,27 +131,36 @@ git log -n200 --pretty=%H |
 # We have to remove any possible readability commits
 
 sort nonread_commits_unchecked.txt | comm -13 readability_commits_unique.txt - > nonread_commits.txt
-
 # comm -13 outputs only lines which are only in file 2. '-' means stdin
 
-num_nonread_commits=$(wc --lines < nonread_commits.txt)
-
 #TODO rm readability_commits_repeated.txt nonread_commits_unchecked.txt
+
+cat readability_commits_unique.txt nonread_commits.txt | cut -c1-10 | sort > all_commits.txt # just keep 10 chars of the hash
+
+if [ ! -z "$EXCLUDE_COMMITS" ] ; then
+	if [ ! -f "$EXCLUDE_COMMITS" ] ; then
+		echo "Error: file EXCLUDE_COMMITS does not exist ($EXCLUDE_COMMITS)"
+		exit 1
+	fi
+	
+	sort "$EXCLUDE_COMMITS" | comm -13 - all_commits.txt > commits_filtered.txt
+	mv commits_filtered.txt all_commits.txt
+fi
+
+num_all_commits=$(wc --lines < all_commits.txt)
 
 
 ## Handle the parallelizing
 
-commits_per_node=$(( (num_readab_commits + num_nonread_commits) / parallel + 1 ))
+commits_per_node=$(( num_all_commits / parallel + 1 ))
 
 if [ $commits_per_node -lt 5 ] ; then # Don't use <. This compares lexicographically
 	echo "Warning: Would be <5 commits per node. Not worth to parallelize"
 	
 	parallel=1
-	commits_per_node=$(( num_readab_commits + num_nonread_commits ))
 fi
 
-cat readability_commits_unique.txt nonread_commits.txt | cut -c1-10 | # just keep 10 chars of the hash
-	split --numeric-suffixes=1 --suffix-length=2 --number=r/$parallel - commits
+split --numeric-suffixes=1 --suffix-length=2 --number=r/$parallel all_commits.txt commits
 # split to $parallel files commits01, commits02... "commits" is the prefix
 # "r/" = do not break lines and use round-robin. "-" is to read from stdin
 
