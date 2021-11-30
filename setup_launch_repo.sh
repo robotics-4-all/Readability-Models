@@ -135,6 +135,7 @@ sort nonread_commits_unchecked.txt | comm -13 readability_commits_unique.txt - >
 
 #TODO rm readability_commits_repeated.txt nonread_commits_unchecked.txt
 
+cp readability_commits_unique.txt nonread_commits.txt "$METRICS_DIR/"
 cat readability_commits_unique.txt nonread_commits.txt | cut -c1-10 | sort > all_commits.txt # just keep 10 chars of the hash
 
 if [ ! -z "$EXCLUDE_COMMITS" ] ; then

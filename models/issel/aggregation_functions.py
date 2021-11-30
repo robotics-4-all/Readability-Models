@@ -47,9 +47,9 @@ def prediction(cluster, df):
     doc_cols = Xtest[["CD", "DLOC", "CLOC"]] # Documentation metrics
 
     if cluster == 'large': #Fix for AttributeError: 'SVR' object has no attribute '_probA'. Only for large?
-    	cmplx_model._predA , cmplx_model._predB = cmplx_model.predA_ , cmplx_model.predB_
-    	cpl_model._predA , cpl_model._predB = cpl_model.predA_ , cpl_model.predB_
-    	doc_model._predA , doc_model._predB = doc_model.predA_ , doc_model.predB_
+        cmplx_model._probA , cmplx_model._probB = cmplx_model.probA_ , cmplx_model.probB_
+        cpl_model._probA , cpl_model._probB = cpl_model.probA_ , cpl_model.probB_
+        doc_model._probA , doc_model._probB = doc_model.probA_ , doc_model.probB_
     
     # maybe remove the column names, because the model complains
     # that it was trained without them. "SVR was fitted without feature names"
