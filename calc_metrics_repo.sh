@@ -47,9 +47,10 @@ function runSMA () {
 		-runVulnerabilityHunter=false -runFaultHunter=false -runRTEHunter=false \
 		-runDCF=true -runMET=true "${files_changed[@]}" > /dev/null
 	# We just want it to calc metrics and duplication check: runMET and runDCF
+	
+	sma_return=$? # The return code would be lost
 	cd ..
 	
-	sma_return=$? # The return code would be lost by the echo
 	if [[ $sma_return == 0 ]] ; then
 		echo " ok"
 	else

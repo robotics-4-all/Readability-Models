@@ -146,7 +146,9 @@ def makeFilepathRelative(df):
 	new_index = []
 	
 	for idxEl in df.index:
-		if idxEl.startswith(curr_dir):
+		if idxEl.startswith(curr_dir + 'filesForEval/'):
+			new_index.append(idxEl[(nskip+13):]) # skip the first chars
+		elif idxEl.startswith(curr_dir):
 			new_index.append(idxEl[nskip:]) # skip the first chars
 		else:
 			new_index.append(idxEl)
