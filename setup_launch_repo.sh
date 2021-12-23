@@ -1,10 +1,11 @@
 #!/usr/bin/bash
 
+#SBATCH --job-name=diploma_calc_metrics
 #SBATCH --time=04:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --nodes=1
 #SBATCH --ntasks=4
-#SBATCH --mem=32G
+#SBATCH --mem-per-cpu=6G # If we define 'mem' total, it can't start parallel steps
 #SBATCH --exclusive # Necessary to start multiple steps with srun, and run parallel
 #TODO find best slurm options
 
@@ -68,6 +69,13 @@ repo_full=$1
 repo_name=$(echo $1 | cut -d '/' -f2) # get the part after the slash. Eg: elastic/elasticsearch
 export METRICS_DIR="$METRICS_DIR/$repo_name"
 
+if [ ! -d "$METRICS_DIR" ] ; then
+	mkdir -p "$METRICS_DIR"
+fi
+# TODO if exists? Should we move it?
+#Or maybe no need because all files get overwritten
+
+
 parallel="${2:-4}"
 # In how many parts to split the commits. Is the 2nd argument. Default = 4.
 
@@ -115,6 +123,7 @@ done
 
 sort -u readability_commits_repeated.txt > readability_commits_unique.txt
 # keep only uniques
+cp readability_commits_unique.txt "$METRICS_DIR"
 
 
 num_readab_commits=$(wc --lines < readability_commits_unique.txt)
@@ -123,10 +132,10 @@ echo "Found $num_readab_commits readability commits!"
 
 
 # Find some random non-readability commits
-# How many? 2x as many as the readability
+# How many? Approx as many as the readability, maybe a bit more in case of getting a readability commit
 
 git log -n200 --pretty=%H |
-	shuf --head-count=$((2*num_readab_commits)) > nonread_commits_unchecked.txt
+	shuf --head-count=$((num_readab_commits*5/4)) > nonread_commits_unchecked.txt
 
 # We have to remove any possible readability commits
 
@@ -138,13 +147,17 @@ sort nonread_commits_unchecked.txt | comm -13 readability_commits_unique.txt - >
 cp readability_commits_unique.txt nonread_commits.txt "$METRICS_DIR/"
 cat readability_commits_unique.txt nonread_commits.txt | cut -c1-10 | sort > all_commits.txt # just keep 10 chars of the hash
 
-if [ ! -z "$EXCLUDE_COMMITS" ] ; then
-	if [ ! -f "$EXCLUDE_COMMITS" ] ; then
-		echo "Error: file EXCLUDE_COMMITS does not exist ($EXCLUDE_COMMITS)"
-		exit 1
-	fi
-	
-	sort "$EXCLUDE_COMMITS" | comm -13 - all_commits.txt > commits_filtered.txt
+
+if [ ! -z "$EXCLUDE_COMMITS" ] && [ ! -f "$EXCLUDE_COMMITS" ]; then
+	echo "Error: file EXCLUDE_COMMITS does not exist ($EXCLUDE_COMMITS)"
+	exit 1
+fi
+if [ -z "$EXCLUDE_COMMITS" ] && [ -f EXCLUDE_COMMITS.txt ]; then
+	EXCLUDE_COMMITS=EXCLUDE_COMMITS.txt
+fi
+if [ ! -z "$EXCLUDE_COMMITS" ]; then
+	echo "Excluding commits from $EXCLUDE_COMMITS"
+	sort "$EXCLUDE_COMMITS" | cut -c1-10 | comm -13 - all_commits.txt > commits_filtered.txt
 	mv commits_filtered.txt all_commits.txt
 fi
 
