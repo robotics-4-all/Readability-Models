@@ -19,6 +19,7 @@ readarray -t KEYWORDS < "$SCRIPTS_DIR/keywords_for_commits.txt"
 # -t discards trailing newlines. Important for git log --grep
 
 echo "Curr dir = $(pwd)"
+echo "Running with options" "${BASH_ARGV[@]}"
 
 # Store the repo to be analysed in this folder. This can be in RAM (like tmpfs) for faster
 if [ -z "$FILES_DIR" ] ; then
@@ -108,7 +109,7 @@ cd "$FILES_DIR/$repo_name"
 
 ## find radability commits
 
-rm -f readability_commits_repeated.txt # Because we will append to it.
+rm -f readability_commits_repeated.txt q0_readab_com_messages.txt # Because we will append to them.
 
 git checkout -f master # we may be detached, not at the main branch.
 
@@ -119,11 +120,14 @@ for keyword in "${KEYWORDS[@]}" ; do
 	# --pretty=%H means to only write the hashes. Otherwise need to use "cut -f1 --delimiter=' '"
 	# --all would search commits from all branches. Don't use --all, because some commits exist multiple times
 	
+	# for RQ 0
+	git log --grep="$keyword" --regexp-ignore-case >> q0_readab_com_messages.txt
 done
 
 sort -u readability_commits_repeated.txt > readability_commits_unique.txt
 # keep only uniques
-cp readability_commits_unique.txt "$METRICS_DIR"
+
+cp readability_commits_unique.txt nonread_commits.txt q0_readab_com_messages.txt "$METRICS_DIR/"
 
 
 num_readab_commits=$(wc --lines < readability_commits_unique.txt)
@@ -144,7 +148,6 @@ sort nonread_commits_unchecked.txt | comm -13 readability_commits_unique.txt - >
 
 #TODO rm readability_commits_repeated.txt nonread_commits_unchecked.txt
 
-cp readability_commits_unique.txt nonread_commits.txt "$METRICS_DIR/"
 cat readability_commits_unique.txt nonread_commits.txt | cut -c1-10 | sort > all_commits.txt # just keep 10 chars of the hash
 
 
