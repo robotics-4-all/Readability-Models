@@ -215,6 +215,10 @@ def issel_model():
 	
 	methods_sma = pd.read_csv('curr_sma_methd.csv')
 	
+	if len(methods_sma) == 0:
+		print("curr_sma_methd.csv has no rows", file=sys.stderr)
+		return
+	
 	df_methods_readabil = issel.prediction_per_cluster(methods_sma)
 	# should contain at least [filename, LOC, readab, r_cmplx, r_cpl, r_doc]
 	
@@ -256,11 +260,11 @@ def main():
 	
 	issel_metrics = issel_model()
 	if isinstance(issel_metrics, pd.DataFrame): # if not null
-		metrics = metrics.join(issel_metrics)
+		metrics = metrics.join(issel_metrics, how='outer')
 	
 	sma_by_class = sma_parse()
 	if isinstance(sma_by_class, pd.DataFrame): # if not null
-		metrics = metrics.join(sma_by_class)
+		metrics = metrics.join(sma_by_class, how='outer')
 	
 	
 	metrics = pd.concat([metrics, bw_score, posnett_score, dorn_score, scalabrino_score], axis=1)
