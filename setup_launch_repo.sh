@@ -127,8 +127,6 @@ done
 sort -u readability_commits_repeated.txt > readability_commits_unique.txt
 # keep only uniques
 
-cp readability_commits_unique.txt nonread_commits.txt q0_readab_com_messages.txt "$METRICS_DIR/"
-
 
 num_readab_commits=$(wc --lines < readability_commits_unique.txt)
 
@@ -146,8 +144,9 @@ git log -n200 --pretty=%H |
 sort nonread_commits_unchecked.txt | comm -13 readability_commits_unique.txt - > nonread_commits.txt
 # comm -13 outputs only lines which are only in file 2. '-' means stdin
 
-#TODO rm readability_commits_repeated.txt nonread_commits_unchecked.txt
 
+cp readability_commits_unique.txt nonread_commits.txt q0_readab_com_messages.txt "$METRICS_DIR/"
+#TODO rm readability_commits_repeated.txt nonread_commits_unchecked.txt
 cat readability_commits_unique.txt nonread_commits.txt | cut -c1-10 | sort > all_commits.txt # just keep 10 chars of the hash
 
 
@@ -210,8 +209,11 @@ for i in $(seq "$parallel" | xargs printf "%02d ") ; do
 
 	echo "starting $i"
 	
-	"$SCRIPTS_DIR/calc_metrics_repo.sh" "commits$i" & #TODO this is basic
-	# srun --ntasks=1 "$SCRIPTS_DIR/calc_metrics_repo.sh" "commits$i" &
+	if [ -z $SLURM_JOB_ID ] ; then
+		"$SCRIPTS_DIR/calc_metrics_repo.sh" "commits$i" & # this for not running in hpc
+	else
+		srun --ntasks=1 "$SCRIPTS_DIR/calc_metrics_repo.sh" "commits$i" & # This for hpc
+	fi
 	echo "($i) pid: $!"
 	children+=($!) # add pid to list of children in case of sigterm
 	
@@ -222,4 +224,3 @@ wait # for all started processes
 
 echo "all done"
 date -Iseconds
-
