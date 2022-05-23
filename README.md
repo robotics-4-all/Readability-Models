@@ -43,8 +43,24 @@ python3 analysis_metrics_perfile.py
 
 The scripts will generate 4 output files: results\_Q1\_percommit.csv, results\_Q1\_perfile.csv, results\_Q2\_percommit.csv, and results\_Q2\_perfile.csv .
 
+### Model generation
+Prerequisites:
+* SourceMeter Analyzer 8.2 for Linux, with PMD 5.2, for generating the target for our model
+* Python >= 3.7, with the libraries numpy, pandas, joblib, and scikit-learn 1.0.1
+
+1. First, run `calc_target_repo.sh` for each repo
+2. To run the Q1 / Q2 analysis on the target, use `analysis_targets_percommit.py` or `analysis_targets_perfile.py`
+3. Merge the various `*_target.csv` with `Zdump_byfiles_aftbefdif_readabilnonread`, into `Zdump_withtarg_byfiles_aftbefdif_readabilnonread`
+4. To train the model with varying number of input features, run `my-model/kfold validation.py`. Set the desired kernel type and hyperparameters of `svr`
+5. To generate the figures for feature elimination (score vs num. of features), run `my-model/graph_for_feature_elimination.py output_of_previous_step`
+
+To just run the models which we trained with the data (including the scaling), run `my-model/apply_my_models.py`.
+This will read from `Zdump_withtarg_byfiles_aftbefdif_readabilnonread` and output to `Zdump_withmodl_byfiles_aftbefdif_readabilnonread`.
+Then, to run the Q1 / Q2 analysis you can use `analysis_metrics_perfile.py`
+
+
 ## Copyright
 Some rights reserved, Anestis Varsamidis, 2021-2022
 
-Thw code is licensed under the GNU GPL version 3. This does not cover the external material which is located in models/
+The code is licensed under the GNU GPL version 3. This does not cover the external material which is located in models/
 
