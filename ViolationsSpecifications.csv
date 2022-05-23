@@ -1,0 +1,194 @@
+RuleType;Explanation;RuleID;Severity;Title
+Error Prone;Using a branching statement as the last part of a loop may be a bug, and/or is confusing;PMD_ABSALIL;Major;Avoid Branching Statement As Last In Loop
+Error Prone;"One might assume that the result of ""new BigDecimal(0.1)"" is exactly equal to 0.1, but it is not because 0.1 cannot be represented exactly as a double (or as a binary fraction of any finite length)";PMD_ADLIBDC;Critical;Avoid Decimal Literals In Big Decimal Constructor
+Error Prone;Avoid Multiple Unary Operators;PMD_AMUO;Major;Avoid Multiple Unary Operators
+Multithreading;Avoid using java.lang.ThreadGroup. Although it is intended to be used in a threaded environment it contains methods that are not thread-safe;PMD_ATG;Critical;Avoid Thread Group
+Best Practices;Application with hard-coded IP addresses can become impossible to deploy in some cases. Externalizing IP adresses is preferable;PMD_AUHCIP;Major;Avoid Using Hard Coded IP
+Error Prone;Integer literals should not start with zero since this denotes that the rest of literal will be interpreted as an octal value;PMD_AUOV;Critical;Avoid Using Octal Values
+Performance;Don’t create instances of already existing BigInteger;PMD_BII;Major;Big Integer Instantiation
+Performance;Avoid instantiating Boolean objects;PMD_BI;Minor;Boolean Instantiation
+Error Prone;The null check is broken since it will throw a NullPointerException itself;PMD_BNC;Critical;Broken Null Check
+Best Practices;Always check the return values of navigation methods (next, previous, first, last) of a ResultSet. If the value return is ‘false’, it should be handled properly;PMD_CRS;Critical;Check Result Set
+Error Prone;The skip() method may skip a smaller number of bytes than requested;PMD_CSR;Critical;Check Skip Result
+Error Prone;When deriving an array of a specific class from your Collection, one should provide an array of the same class as the parameter of the toArray() method. Doing otherwise you will will result in a ClassCastException;PMD_CCEWTA;Critical;Class Cast Exception With To Array
+Design;Sometimes two consecutive ‘if’ statements can be consolidated by separating their conditions with a boolean short-circuit operator;PMD_CIS;Minor;Collapsible If Statements
+Multithreading;Explicitly calling Thread.run() method will execute in the caller’s thread of control. Instead, call Thread.start() for the intended behavior;Critical;Explicitly calling Thread.run()
+Error Prone;Don’t use floating point for loop indices;PMD_DUFTFLI;Critical;Dont Use Float Type For Loop Indices
+Multithreading;Partially created objects can be returned by the Double Checked Locking pattern when used in Java;PMD_DCL;Critical;Double Checked Locking
+Error Prone;Empty Catch Block finds instances where an exception is caught, but nothing is done;PMD_ECB;Critical;Empty Catch Block
+Error Prone;Empty finally blocks serve no purpose and should be removed;PMD_EFB;Minor;Empty Finally Block
+Error Prone;Empty If Statement finds instances where a condition is checked but nothing is done about it;PMD_EIS;Major;Empty If Stmt
+Error Prone;Empty block statements serve no purpose and should be removed.;PMD_EmSB;Minor;Empty Statement Block
+Error Prone;An empty statement (or a semicolon by itself) that is not used as the sole body of a ‘for’ or ‘while’ loop is probably a bug;PMD_ESNIL;Minor;Empty Statement Not In Loop
+Error Prone;Empty initializers serve no purpose and should be removed;PMD_ESI;Minor;Empty Static Initializer
+Error Prone;Empty switch statements serve no purpose and should be removed;PMD_ESS;Major;Empty Switch Statements
+Error Prone;Empty synchronized blocks serve no purpose and should be removed;PMD_ESB;Major;Empty Synchronized Block
+Error Prone;Avoid empty try blocks - what’s the point?;PMD_ETB;Major;Empty Try Block
+Error Prone;Empty While Statement finds all instances where a while statement does nothing.If it is a timing loop, then you should use Thread.sleep() for it;PMD_EWS;Critical;Empty While Stmt
+Code Style;No need to explicitly extend Object;PMD_EO;Minor;Extends Object
+Code Style;Some for loops can be simplified to while loops, this makes them more concise;PMD_FLSBWL;Minor;For Loop Should Be While Loop
+Error Prone;Avoid jumbled loop incrementers - its usually a mistake, and is confusing even if intentional;PMD_JI;Critical;Jumbled Incrementer
+Error Prone;"The null check here is misplaced. If the variable is null a NullPointerException will be thrown. Either the check is useless (the variable will never be ""null"") or it is incorrect";PMD_MNC;Critical;Misplaced Null Check
+Error Prone;Override both public boolean Object.equals(Object other), and public int Object.hashCode(), or override neither;PMD_OBEAH;Critical;Override Both Equals And Hashcode
+Error Prone;Avoid returning from a finally block, this can discard exceptions;PMD_RFFB;Critical;Return From Finally Block
+Error Prone;"Do not use ""if"" statements whose conditionals are always true or always false";PMD_UIS;Major;Unconditional If Statement
+Error Prone;Avoid the use temporary objects when converting primitives to Strings. Use the static conversion methods on the wrapper classes instead;PMD_UCT;Minor;Unnecessary Conversion Temporary
+Error Prone;After checking an object reference for null, you should invoke equals() on that object rather than passing it to another object’s equals() method;PMD_UNCIE;Critical;Unused Null Check In Equals
+Error Prone;An operation on an Immutable object (String, BigDecimal or BigInteger) won’t change the object itself since the result of the operation is a new object;PMD_UOOI;Critical;Useless Operation On Immutable
+Design;The overriding method merely calls the same method defined in a superclass;PMD_UOM;Minor;Useless Overriding Method
+Code Style;For Loops Must Use Braces;PMD_FLMUB;Minor;For Loops Must Use Braces
+Code Style;If Else Stmts Must Use Braces;PMD_IESMUB;Minor;If Else Stmts Must Use Braces
+Code Style;If Stmts Must Use Braces;PMD_ISMUB;Minor;If Stmts Must Use Braces
+Code Style;While Loops Must Use Braces;PMD_WLMUB;Minor;While Loops Must Use Braces
+Error Prone;The method clone() should throw a CloneNotSupportedException;PMD_CTCNSE;Major;Clone Throws Clone Not Supported Exception
+Error Prone;Object clone() should be implemented with super.clone();PMD_PCI;Critical;Proper Clone Implementation
+Error Prone;Avoid assignments in operands. This can make code more complicated and harder to read;PMD_AIO;Minor;Assignment In Operand
+Error Prone;Methods such as getDeclaredConstructors(), getDeclaredConstructor(Class[]) and setAccessible(), as the interface PrivilegedAction, allow for the runtime alteration of variable, class, or method visibility, even if they are private. This violates the principle of encapsulation;PMD_AAA;Major;Avoid Accessibility Alteration
+Code Style;Prefixing parameters by ‘in’ or ‘out’ pollutes the name of the parameters and reduces code readability;PMD_APMP;Minor;Avoid Prefixing Method Parameters
+Code Style;Unnecessary reliance on Java Native Interface (JNI) calls directly reduces application portability and increases the maintenance burden;PMD_AUNC;Major;Avoid Using Native Code
+Code Style;Use explicit scoping instead of accidental usage of default package private level;PMD_DP;Minor;Default Package
+Error Prone;Calls to System.gc(), Runtime.getRuntime().gc(), and System.runFinalization() are not advised. Code should have the same behavior whether the garbage collection is disabled using the option -Xdisableexplicitgc or not;PMD_DNCGCE;Major;Do Not Call Garbage Collection Explicitly
+Error Prone;Avoid importing anything from the ‘sun.*’ packages. These packages are not portable and are likely to change;PMD_DIS;Major;Dont Import Sun
+Best Practices;Java allows the use of several variables declaration of the same type on one line. However, it can lead to quite messy code;PMD_ODPL;Minor;One Declaration Per Line
+Error Prone;A suspicious octal escape sequence was found inside a String literal;PMD_SOE;Major;Suspicious Octal Escape
+Code Style;When there is only one constructor and the constructor is identical to the default constructor, then it is not necessary;PMD_UC;Minor;Unnecessary Constructor
+Best Practices;The abstract class does not contain any abstract methods. An abstract class suggests an incomplete implementation, which is to be completed by subclasses implementing the abstract methods;PMD_ACWAM;Minor;Abstract Class Without Abstract Method
+Design;If an abstract class does not provides any methods, it may be acting as a simple data container that is not meant to be instantiated;PMD_AbCWAM;Minor;Abstract Class Without Any Method
+Error Prone;Possible unsafe usage of a static field;PMD_ATNFS;Critical;Assignment To Non Final Static
+Best Practices;Avoid constants in interfaces. Interfaces should define types, constants are implementation details better placed in classes or enums;PMD_ACI;Minor;Avoid Constants Interface
+Error Prone;Each caught exception type should be handled in its own catch clause;PMD_AICICC;Major;Avoid Instanceof Checks In Catch Clause
+Code Style;Do not use protected fields in final classes since they cannot be subclassed;PMD_APFIFC;Minor;Avoid Protected Field In Final Class
+Code Style;Do not use protected methods in most final classes since they cannot be subclassed;PMD_APMIFCNE;Minor;Avoid Protected Method In Final Class Not Extending
+Best Practices;Reassigning values to incoming parameters is not recommended. Use temporary local variables instead;PMD_ARP;Minor;Avoid Reassigning Parameters
+Multithreading;Method-level synchronization can cause problems when new code is added to the method. Block-level synchronization helps to ensure that only the code that needs synchronization gets it;PMD_ASAML;Minor;Avoid Synchronized At Method Level
+Error Prone;BadComparison;PMD_BC;Critical;Bad Comparison
+Error Prone;Avoid equality comparisons with Double.NaN due to the implicit lack of representation precision;PMD_CWOPCSBF;Minor;Class With Only Private Constructors Should Be Final
+Error Prone;Ensure that resources (like java.sql.Connection, java.sql.Statement, and java.sql.ResultSet objects and any subtype of java.lang.AutoCloseable) are always closed after use. Failing to do so might result in resource leaks;PMD_ClR;Critical;Close Resource
+Error Prone;Calling overridable methods during construction poses a risk of invoking methods on an incompletely constructed object and can be difficult to debug;PMD_CCOM;Critical;Constructor Calls Overridable Method
+Best Practices;By convention, the default label should be the last label in a switch statement;PMD_DLNLISS;Minor;Default Label Not Last In Switch Stmt
+Code Style;Empty or auto-generated methods in an abstract class should be tagged as abstract;PMD_EMIACSBA;Major;Empty Method In Abstract Class Should Be Abstract
+Error Prone;Tests for null should not use the equals() method. The ‘==’ operator should be used instead;PMD_EN;Critical;Equals Null
+Code Style;Fields should be declared at the top of the class, before any method declarations, constructors, initializers or inner classes;PMD_FDSBASOC;Minor;Field Declarations Should Be At Start Of Class
+Design;If a final field is assigned to a compile-time constant, it could be made static, thus saving overhead in each object at runtime;PMD_FFCBS;Minor;Final Field Could Be Static
+Error Prone;Avoid idempotent operations - they have no effect;PMD_IO;Major;Idempotent Operations
+Design;Private fields whose values never change once object initialization ends either in the declaration of the field or by a constructor should be final;PMD_IF;Minor;Immutable Field
+Error Prone;Avoid instantiating an object just to call getClass() on it use the .class public member instead;PMD_ITGC;Major;Instantiation To Get Class
+Design;Use opposite operator instead of negating the whole expression with a logic complement operator;PMD_LI;Minor;Logic Inversion
+Error Prone;Switch statements without break or return statements for each case option may indicate problematic behaviour. Empty cases are ignored as these indicate an intentional fall-through;PMD_MBIS;Critical;Missing Break In Switch
+Error Prone;A class that has private constructors and does not have any static methods or fields cannot be used;PMD_MSMINIC;Minor;Missing Static Method In Non Instantiatable Class
+Error Prone;A non-case label (e.g. a named break/continue label) was present in a switch statement. This legal, but confusing. It is easy to mix up the case labels and the non-case labels;PMD_NCLISS;Critical;Non Case Label In Switch Statement
+Error Prone;A non-static initializer block will be called any time a constructor is invoked (just prior to invoking the constructor);PMD_NSI;Critical;Non Static Initializer
+Multithreading;Non-thread safe singletons can result in bad state changes. Eliminate static singletons if possible by instantiating the object directly. Static singletons are usually not needed as only a single instance exists anyway;PMD_NTSS;Critical;Non Thread Safe Singleton
+Performance;Calls to a collection’s ‘toArray(E[])’ method should specify a target array of zero size;PMD_OTAC;Major;Optimizable To Array Call
+Best Practices;Position literals first in comparisons, if the second argument is null then NullPointerExceptions can be avoided, they will just return false;PMD_PLFICIC;Critical;Position Literals First In Case Insensitive Comparisons
+Best Practices;Position literals first in comparisons, if the second argument is null then NullPointerExceptions can be avoided, they will just return false;PMD_PLFIC;Critical;Position Literals First In Comparisons
+Best Practices;Throwing a new exception from a catch block without passing the original exception into the new exception will cause the original stack trace to be lost making it difficult to debug effectively;PMD_PST;Major;Preserve Stack Trace
+Error Prone;For any method that returns an array, it is a better to return an empty array rather than a null reference. This removes the need for null checking all results and avoids inadvertent NullPointerExceptions;PMD_REARTN;Major;Return Empty Array Rather Than Null
+Error Prone;Be sure to specify a Locale when creating SimpleDateFormat instances to ensure that locale-appropriate formatting is used;PMD_SDFNL;Minor;Simple Date Format Needs Locale
+Design;Avoid unnecessary comparisons in boolean expressions, they serve no purpose and impacts readability;PMD_SBE;Minor;Simplify Boolean Expressions
+Design;Avoid unnecessary if-then-else statements when returning a boolean. The result of the conditional test can be returned instead;PMD_SBR;Minor;Simplify Boolean Returns
+Design;No need to check for null before an instanceof. The instanceof keyword returns false when given a null argument;PMD_SC;Minor;Simplify Conditional
+Design;Fields whose scopes are limited to just single methods do not rely on the containing object to provide them to other methods. They may be better implemented as local variables within those methods;PMD_SF;Major;Singular Field
+Best Practices;All switch statements should include a default option to catch any unspecified values;PMD_SSSHD;Major;Switch Stmts Should Have Default
+Performance;Switch statements are intended to be used to support complex branching behaviour. Using a switch for only a few cases is ill-advised, since switches are not as easy to understand as if-then statements;PMD_TFBFASS;Minor;Too Few Branches For ASwitch Statement
+Documentation;By explicitly commenting empty constructors it is easier to distinguish between intentional (commented) and unintentional empty constructors;PMD_UEC;Minor;Uncommented Empty Constructor
+Documentation;By explicitly commenting empty method bodies it is easier to distinguish between intentional (commented) and unintentional empty methods;PMD_UEM;Minor;Uncommented Empty Method
+Code Style;Avoid the creation of unnecessary local variables;PMD_ULBR;Minor;Unnecessary Local Before Return
+Multithreading;SimpleDateFormat instances are not synchronized. Sun recommends using separate format instances for each thread. If multiple threads must access a static formatter, the formatter must be synchronized on block leve;PMD_USDF;Critical;Unsynchronized Static Date Formatter
+Best Practices;The isEmpty() method on java.util.Collection is provided to determine if a collection has any elements. Comparing the value of size() to 0 does not convey intent as well as the isEmpty() method;PMD_UCIE;Major;Use Collection Is Empty
+Error Prone;When doing String::toLowerCase()/toUpperCase() conversions, use an explicit locale argument to specify the case transformation rules;PMD_ULWCC;Critical;Use Locale With Case Conversions
+Multithreading;Thread.notify() awakens a thread monitoring the object. If more than one thread is monitoring, then only one is chosen. The thread chosen is arbitrary and thus its usually safer to call notifyAll() instead;PMD_UNAION;Critical;Use Notify All Instead Of Notify
+Best Practices;Java 5 introduced the varargs parameter declaration for methods and constructors. This syntactic sugar provides flexibility for users of these methods and constructors, allowing them to avoid having to deal with the creation of an array;PMD_UV;Minor;Use Varargs
+Error Prone;The method Object.finalize() is called by the garbage collector on an object when garbage collection determines that there are no more references to the object. It should not be invoked by application logic;PMD_ACF;Major;Avoid Calling Finalize
+Error Prone;Empty finalize methods serve no purpose and should be removed. Note that Oracle has declared Object.finalize() as deprecated since JDK 9;PMD_EF;Minor;Empty Finalizer
+Error Prone;If the finalize() is implemented, its last action should be to call super.finalize. Note that Oracle has declared Object.finalize() as deprecated since JDK 9;PMD_FDNCSF;Critical;Finalize Does Not Call Super Finalize
+Error Prone;If the finalize() is implemented, it should do something besides just calling super.finalize(). Note that Oracle has declared Object.finalize() as deprecated since JDK 9;PMD_FOCSF;Minor;Finalize Only Calls Super Finalize
+Error Prone;Methods named finalize() should not have parameters. It is confusing and most likely an attempt to overload Object.finalize(). It will not be called by the VM;PMD_FO;Critical;Finalize Overloaded
+Error Prone;When overriding the finalize(), the new method should be set as protected. If made public, other classes may invoke it at inappropriate times;PMD_FSBP;Critical;Finalize Should Be Protected
+Code Style;Avoid importing anything from the package ‘java.lang’. These classes are automatically imported;PMD_DIJL;Minor;Dont Import Java Lang
+Code Style;Duplicate or overlapping import statements should be avoided;PMD_DI;Minor;Duplicate Imports
+Error Prone;There is no need to import a type that lives in the same package;PMD_IFSP;Minor;Import From Same Package
+Code Style;If you overuse the static import feature, it can make your program unreadable and unmaintainable, polluting its namespace with all the static members you import;PMD_TMSI;Major;Too Many Static Imports
+Code Style;Import statements allow the use of non-fully qualified names. The use of a fully qualified name which is covered by an import statement is redundant;PMD_UFQN;Minor;Unnecessary Fully Qualified Name
+Error Prone;Web applications should not call System.exit(), since only the web container or the application server should stop the JVM;PMD_DNCSE;Critical;Do Not Call System Exit
+Code Style;The Local Home interface of a Session EJB should be suffixed by ‘LocalHome’;PMD_LHNC;Major;Local Home Naming Convention
+Code Style;The Local Interface of a Session EJB should be suffixed by ‘Local’;PMD_LISNC;Major;Local Interface Session Naming Convention
+Code Style;The EJB Specification states that any MessageDrivenBean or SessionBean should be suffixed by ‘Bean’;PMD_MDBASBNC;Major;MDBAnd Session Bean Naming Convention
+Code Style;Remote Interface of a Session EJB should not have a suffix;PMD_RINC;Major;Remote Interface Naming Convention
+Code Style;A Remote Home interface type of a Session EJB should be suffixed by ‘Home’;PMD_RSINC;Major;Remote Session Interface Naming Convention
+Error Prone;According to the J2EE specification, an EJB should not have any static fields with write access. However, static read-only fields are allowed;PMD_SEJBFSBF;Critical;Static EJBField Should Be Final
+Best Practices;JUnit assertions should include an informative message - i.e., use the three-argument version of assertEquals(), not the two-argument version;PMD_JUASIM;Minor;JUnit Assertions Should Include Message
+Error Prone;Some JUnit framework methods are easy to misspell;PMD_JUS;Critical;JUnit Spelling
+Error Prone;The suite() method in a JUnit test needs to be both public and static;PMD_JUSS;Critical;JUnit Static Suite
+Best Practices;Unit tests should not contain too many asserts. Many asserts are indicative of a complex test, for which it is harder to verify correctness;PMD_JUTCTMA;Minor;JUnit Test Contains Too Many Asserts
+Best Practices;JUnit tests should include at least one assertion. This makes the tests more robust, and using assert with messages provide the developer a clearer idea of what the test does;PMD_JUTSIA;Major;JUnit Tests Should Include Assert
+Design;Avoid negation in an assertTrue or assertFalse test;PMD_SBA;Minor;Simplify Boolean Assertion
+Error Prone;Test classes end with the suffix Test. Having a non-test class with that name is not a good practice, since most people will assume it is a test case;PMD_TCWTC;Minor;Test Class Without Test Cases
+Error Prone;A JUnit test assertion with a boolean literal is unnecessary since it always will evaluate to the same thing. Consider using flow control (in case of assertTrue(false) or similar) or simply removing statements like assertTrue(true) and assertFalse(false);PMD_UBA;Minor;Unnecessary Boolean Assertion
+Best Practices;The assertions should be made by more specific methods, like assertEquals;PMD_UAEIOAT;Major;Use Assert Equals Instead Of Assert True
+Best Practices;The assertions should be made by more specific methods, like assertNull, assertNotNull;PMD_UANIOAT;Minor;Use Assert Null Instead Of Assert True
+Best Practices;The assertions should be made by more specific methods, like assertSame, assertNotSame;PMD_UASIOAT;Minor;Use Assert Same Instead Of Assert True
+Best Practices;When asserting a value is the same as a literal or Boxed boolean, use assertTrue/assertFalse, instead of assertEquals;PMD_UATIOAE;Minor;Use Assert True Instead Of Assert Equals
+Best Practices;When log messages are composed by concatenating strings, the whole section should be guarded by a isDebugEnabled() check to avoid performance and memory issues;PMD_GDL;Major;Guard Debug Logging
+Best Practices;Whenever using a log level, one should check if the loglevel is actually enabled, or otherwise skip the associate String creation and manipulation;PMD_GLS;Minor;Guard Log Statement
+Error Prone;A logger should normally be defined private static final and be associated with the correct class;PMD_PL;Minor;Proper Logger
+Error Prone;To make sure the full stacktrace is printed out, use the logging statement with two arguments: a String and a Throwable;PMD_UCEL;Major;Use Correct Exception Logging
+Best Practices; Avoid printStackTrace() use a logger call instead;PMD_APST;Major;Avoid Print Stack Trace
+Best Practices;Whenever using a log level, one should check if the loglevel is actually enabled, or otherwise skip the associate String creation and manipulation;PMD_GLSJU;Minor;Guard Log Statement Java Util
+Error Prone;In most cases, the Logger reference can be declared as static and final;PMD_LINSF;Minor;Logger Is Not Static Final
+Error Prone;Normally only one logger is used in each class;PMD_MTOL;Major;More Than One Logger
+Best Practices;References to System.(out|err).print are usually intended for debugging purposes. Use a logger instead;PMD_SP;Major;System Println
+Error Prone;Serializable classes should provide a serialVersionUID field;PMD_MSVUID;Major;Missing Serial Version UID
+Code Style;Avoid using dollar signs in variable/method/class/interface names;PMD_ADS;Minor;Avoid Dollar Signs
+Error Prone;It can be confusing to have a field name with the same name as a method;PMD_AFNMMN;Minor;Avoid Field Name Matching Method Name
+Error Prone;It is somewhat confusing to have a field name matching the declaring class name;PMD_AFNMTN;Minor;Avoid Field Name Matching Type Name
+Code Style;Methods that return boolean results should be named as predicate statements to denote this. I.e, ‘isReady()’, ‘hasValues()’, ‘canCommit()’, ‘willFail()’, etc. Avoid the use of the ‘get’ prefix for these methods;PMD_BGMN;Minor;Boolean Get Method Name
+Code Style;Configurable naming conventions for type declarations;PMD_CNC;Minor;Class Naming Conventions
+Code Style;Names for references to generic values should be limited to a single uppercase letter;PMD_GN;Minor;Generics Naming
+Code Style;Configurable naming conventions for method declarations;PMD_MeNC;Minor;Method Naming Conventions
+Error Prone;Non-constructor methods should not have the same name as the enclosing class;PMD_MWSNAEC;Minor;Method With Same Name As Enclosing Class
+Code Style;A class, interface, enum or annotation does not have a package definition;PMD_NP;Minor;No Package
+Code Style;The package definition contains uppercase characters;PMD_PC;Minor;Package Case
+Code Style;Short Classnames with fewer than e.g. five characters are not recommended;PMD_SCN;Minor;Short Class Name
+Code Style;Method names that are very short are not helpful to the reader;PMD_SMN;Minor;Short Method Name
+Code Style;Field names using all uppercase characters - Sun’s Java naming conventions indicating constants - should be declared as final;PMD_SCFN;Minor;Suspicious Constant Field Name
+Error Prone;The method name and parameter number are suspiciously close to equals(Object), which can denote an intention to override the equals(Object) method;PMD_SEMN;Critical;Suspicious Equals Method Name
+Error Prone;The method name and return type are suspiciously close to hashCode(), which may denote an intention to override the hashCode() method;PMD_SHMN;Critical;Suspicious Hashcode Method Name
+Code Style;Final variables should be fully capitalized and non-final variables should not include underscores;PMD_VNC;Minor;Variable Naming Conventions
+Performance;The conversion of literals to strings by concatenating them with empty strings is inefficient. It is much better to use one of the type-specific toString() methods instead;PMD_AES;Minor;Add Empty String
+Performance;Instead of manually copying data between two arrays, use the efficient Arrays.copyOf or System.arraycopy method instead;PMD_AAL;Major;Avoid Array Loops
+Performance;Java will initialize fields with known default values so any explicit initialization of those same defaults is redundant and results in a larger class file (approximately three additional bytecode instructions per field);PMD_RFI;Minor;Redundant Field Initializer
+Performance;Most wrapper classes provide static conversion methods that avoid the need to create intermediate objects just to create the primitive forms. Using these avoids the cost of creating objects that also need to be garbage-collected later;PMD_UWOC;Major;Unnecessary Wrapper Object Creation
+Performance;ArrayList is a much better Collection implementation than Vector if thread-safe operation is not required;PMD_UALIOV;Minor;Use Array List Instead Of Vector
+Performance;"The java.util.Arrays class has a ""asList"" method that should be used when you want to create a new List from an array of objects. It is faster than executing a loop to copy all the elements of the array one by one";PMD_UAAL;Major;Use Arrays As List
+Performance;The use of the ‘+=’ operator for appending strings causes the JVM to create and use an internal StringBuffer. If a non-trivial number of these concatenations are being used then the explicit use of a StringBuilder or threadsafe StringBuffer is recommended to avoid this;PMD_USBFSA;Major;Use String Buffer For String Appends
+Security;Constructors and methods receiving arrays should clone objects and store the copy. This prevents future changes from the user from affecting the original array;PMD_AISD;Major;Array Is Stored Directly
+Security;Exposing internal arrays to the caller violates object encapsulation since elements can be removed or replaced outside of the object that owns it. It is safer to return a copy of the array;PMD_MRIA;Major;Method Returns Internal Array
+Design;Avoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block;PMD_ACGE;Major;Avoid Catching Generic Exception
+Error Prone;Code should never throw NullPointerExceptions under normal circumstances. A catch block may hide the original error, causing other, more subtle problems later on;PMD_ACNPE;Critical;Avoid Catching NPE
+Error Prone;Catching Throwable errors is not recommended since its scope is very broad. It includes runtime issues such as OutOfMemoryError that should be exposed and managed separately;PMD_ACT;Major;Avoid Catching Throwable
+Error Prone;Statements in a catch block that invoke accessors on the exception without using the information only add to code size. Either remove the invocation, or use the return result;PMD_ALEI;Major;Avoid Losing Exception Information
+Design;Catch blocks that merely rethrow a caught exception only add to code size and runtime complexity;PMD_ARE;Minor;Avoid Rethrowing Exception
+Design;Catch blocks that merely rethrow a caught exception wrapped inside a new instance of the same type only add to code size and runtime complexity;PMD_ATNIOSE;Minor;Avoid Throwing New Instance Of Same Exception
+Design;Avoid throwing NullPointerExceptions manually. These are confusing because most people will assume that the virtual machine threw it. To avoid a method being called with a null parameter, you may consider using an IllegalArgumentException instead;PMD_ATNPE;Critical;Avoid Throwing Null Pointer Exception
+Design;Avoid throwing certain exception types. Rather than throw a raw RuntimeException, Throwable, Exception, or Error, use a subclassed exception or error instead;PMD_ATRET;Major;Avoid Throwing Raw Exception Types
+Design;Errors are system exceptions. Do not extend them;PMD_DNEJLE;Critical;Do Not Extend Java Lang Error
+Error Prone;"Throwing exceptions within a ‘finally’ block is confusing since they may mask other exceptions or code defects. Note: This is a PMD implementation of the Lint4j rule ""A throw in a finally block""";PMD_DNTEIF;Critical;Do Not Throw Exception In Finally
+Design;Using Exceptions as form of flow control is not recommended as they obscure true exceptions when debugging. Either add the necessary validation or use an alternate control structure;PMD_EAFC;Major;Exception As Flow Control
+Error Prone;Code containing duplicate String literals can usually be improved by declaring the String as a constant field;PMD_ADL;Major;Avoid Duplicate Literals
+Best Practices;StringBuffers/StringBuilders can grow considerably, and so may become a source of memory leaks if held within objects with long lifetimes;PMD_ASBF;Minor;Avoid String Buffer Field
+Performance;Consecutive calls to StringBuffer/StringBuilder .append should be chained, reusing the target object. This can improve the performance by producing a smaller bytecode, reducing overhead and improving inlining;PMD_CASR;Minor;Consecutive Appends Should Reuse
+Performance;Consecutively calling StringBuffer/StringBuilder.append(…) with literals should be avoided;PMD_CLA;Minor;Consecutive Literal Appends
+Performance;Avoid concatenating non-literals in a StringBuffer constructor or append() since intermediate buffers will need to be be created and destroyed by the JVM;PMD_ISB;Minor;Inefficient String Buffering
+Error Prone;Individual character values provided as initialization arguments will be converted into integers. This can lead to internal buffer sizes that are larger than expected;PMD_SBIWC;Critical;String Buffer Instantiation With Char
+Performance;Avoid instantiating String objects. This is usually unnecessary since they are immutable and can be safely shared;PMD_StI;Minor;String Instantiation
+Performance;Avoid calling toString() on objects already known to be string instances. This is unnecessary;PMD_STS;Minor;String To String
+Performance;Using equalsIgnoreCase() is faster than using toUpperCase/toLowerCase().equals();PMD_UCC;Minor;Unnecessary Case Change
+Security;Using ‘==’ or ‘!=’ to compare strings only works if intern version is used on both sides;PMD_UETCS;Critical;Use Equals To Compare Strings
+Error Prone;The method clone() should only be implemented if the class implements the Cloneable interface with the exception of a final method that only throws CloneNotSupportedException;PMD_ClMMIC;Major;Clone Method Must Implement Cloneable
+Best Practices;The use of implementation types (i.e., HashSet) as object references limits your ability to use alternate implementations in the future as requirements change. Whenever available, referencing objects by their interface types (i.e, Set) provides much more flexibility;PMD_LoC;Major;Loose Coupling
+Design;A method/constructor shouldn’t explicitly throw the generic java.lang.Exception, since it is unclear which exceptions that can be thrown from the methods. It might be difficult to document and understand such vague interfaces. Use either a class derived from RuntimeException or a checked exception;PMD_SiDTE;Major;Signature Declare Throws Exception
+Best Practices;Avoid unused import statements to prevent unwanted dependencies;PMD_UnI;Minor;Unused Imports
+Best Practices;The local variable is declared and/or assigned, but not used;PMD_ULV;Major;Unused Local Variable
+Best Practices;The private field is declared and/or assigned a value, but not used;PMD_UPF;Major;Unused Private Field
+Best Practices;The private method is declared but is unused;PMD_UPM;Major;Unused Private Method
