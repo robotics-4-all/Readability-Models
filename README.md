@@ -1,5 +1,9 @@
 # Readability-Models
-GitHub repository for thesis "Αξιολόγηση Μοντέλων Αναγνωσιμότητας Έργων Λογισμικού και Εξαγωγή Χρήσιμων Χαρακτηριστικών"
+GitHub repository for thesis:
+
+"Αξιολόγηση μοντέλων αναγνωσιμότητας κώδικα σε μικρές μεταβολές και κατασκευή νέου μοντέλου"  
+"Evaluating code readability models in incremental changes and developing a new model"
+
 
 ## How to run the software
 
@@ -18,7 +22,7 @@ To execute the script, run
 ```
 ./setup_launch_repo.sh repo_owner/repo_name [parallel]
 ```
-`repo_owner/repo_name` is the name of the repository in GitHub
+`repo_owner/repo_name` is the name of the repository in GitHub  
 `parallel` is an optional argument for the number of parallel instances of calc\_metrics\_repo.sh to launch (default=4)
 
 Some key directories (folders):
@@ -62,5 +66,5 @@ Then, to run the Q1 / Q2 analysis you can use `analysis_metrics_perfile.py`
 ## Copyright
 Some rights reserved, Anestis Varsamidis, 2021-2022
 
-The code is licensed under the GNU GPL version 3. This does not cover the external material which is located in models/
-
+The code is licensed under the GNU GPL version 3.  
+This does not cover the external material which is located in models/
